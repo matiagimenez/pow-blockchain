@@ -82,25 +82,42 @@ def update_keep_alive(node_ip, miner_type):
 
 
 def check_node_status(node_ip):
-    # Función para verificar el estado de un nodo
-    current_time = int(time.time())
-    last_keep_alive = redis.hget("mining_pool", node_ip)
-    if last_keep_alive:
-        last_keep_alive = int(last_keep_alive.decode())
-        if current_time - last_keep_alive <= EXPIRATION_TIME:
-            return True
-    return False
+    try:
+        # Función para verificar el estado de un nodo
+        current_time = int(time.time())
+        last_keep_alive = redis.hget("mining_pool", node_ip)
+        if last_keep_alive:
+            last_keep_alive = int(last_keep_alive.decode())
+            if current_time - last_keep_alive <= EXPIRATION_TIME:
+                return True
+        return False
+    except redis_exceptions.ConnectionError as error:
+        print("Connection to Redis lost. Reconnecting...",
+              file=sys.stderr, flush=True)
+        redis = redis_connect()
+        return False
+    except redis_exceptions.RedisError as error:
+        print(f"Redis error: {error}", file=sys.stderr, flush=True)
+        return False
 
 
 def get_gpu_active_nodes():
     # Función para obtener la cantidad de nodos activos
-    gpu_active_nodes = 0
-    all_nodes = redis.hkeys("mining_pool")
-    for node_ip in all_nodes:
-        if check_node_status(node_ip.decode()):
-            active_nodes += 1
-
-    return gpu_active_nodes
+    try:
+        gpu_active_nodes = 0
+        all_nodes = redis.hkeys("mining_pool")
+        for node_ip in all_nodes:
+            if check_node_status(node_ip.decode()):
+                active_nodes += 1
+        return gpu_active_nodes
+    except redis_exceptions.ConnectionError as error:
+        print("Connection to Redis lost. Reconnecting...",
+              file=sys.stderr, flush=True)
+        redis = redis_connect()
+        return 0
+    except redis_exceptions.RedisError as error:
+        print(f"Redis error: {error}", file=sys.stderr, flush=True)
+        return 0
 
 
 def check_pool_status():
@@ -147,7 +164,10 @@ def consume_mining_tasks():
 
             if (result):
                 rabbitmq.basic_ack(method.delivery_tag)
-
+        except pika.exceptions.AMQPConnectionError:
+            print("Connection to RabbitMQ lost. Reconnecting...",
+                  file=sys.stderr, flush=True)
+            rabbitmq = rabbit_connect()
         except rabbitmq_exceptions.AMQPError as error:
             print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
         except Exception as e:

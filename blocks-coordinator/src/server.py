@@ -62,11 +62,11 @@ def build_block(transactions):
 
             properties = pika.BasicProperties(
                 delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
-            
+
             # TODO: Consultar estado del pool de mineros y asignar el challenge dependiendo del estado actual.
-            #? Si GPU_COUNT > 0 => challenge GPU_HASH_CHALLENGE
-            #? Si GPU_COUNT = 0 => challenge CPU_HASH_CHALLENGE
-            #* Por el momento, la GPU está inhabilitada en los mineros, por lo cuál asigno directamente CPU_HASH_CHALLENGE
+            # ? Si GPU_COUNT > 0 => challenge GPU_HASH_CHALLENGE
+            # ? Si GPU_COUNT = 0 => challenge CPU_HASH_CHALLENGE
+            # * Por el momento, la GPU está inhabilitada en los mineros, por lo cuál asigno directamente CPU_HASH_CHALLENGE
             challenge = CPU_HASH_CHALLENGE
 
             rabbitmq.basic_publish(
@@ -76,10 +76,15 @@ def build_block(transactions):
 
             print(
                 f"{datetime.now()}: Block {new_block.index} [{new_block.previous_hash}] created ...")
+        except redis_exceptions.ConnectionError as error:
+            print("Connection to Redis lost. Reconnecting...",
+                  file=sys.stderr, flush=True)
+            redis = redis_connect()
         except redis_exceptions.RedisError as error:
             print(f"Redis error: {error}", file=sys.stderr, flush=True)
         except pika.exceptions.AMQPConnectionError as connection_error:
-            print("Connection to RabbitMQ lost. Reconnecting...", file=sys.stderr, flush=True)
+            print("Connection to RabbitMQ lost. Reconnecting...",
+                  file=sys.stderr, flush=True)
             rabbitmq = rabbit_connect()
         except rabbitmq_exceptions.AMQPError as error:
             print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
@@ -154,6 +159,10 @@ def registerTransaction():
             "status": "200",
             "description": "Transaction registered successfully"
         })
+    except redis_exceptions.ConnectionError as error:
+        print("Connection to Redis lost. Reconnecting...",
+              file=sys.stderr, flush=True)
+        redis = redis_connect()
     except redis_exceptions.RedisError as error:
         print(f"Redis error: {error}", file=sys.stderr, flush=True)
         return jsonify({
@@ -161,7 +170,8 @@ def registerTransaction():
             "description": "Internal server error"
         })
     except pika.exceptions.AMQPConnectionError as connection_error:
-        print("Connection to RabbitMQ lost. Reconnecting...", file=sys.stderr, flush=True)
+        print("Connection to RabbitMQ lost. Reconnecting...",
+              file=sys.stderr, flush=True)
         rabbitmq = rabbit_connect()
     except rabbitmq_exceptions.AMQPError as error:
         print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
@@ -221,6 +231,10 @@ def validateBlock():
             "description": f"Block {new_block.index} created",
         })
 
+    except redis_exceptions.ConnectionError as error:
+        print("Connection to Redis lost. Reconnecting...",
+              file=sys.stderr, flush=True)
+        redis = redis_connect()
     except redis_exceptions.RedisError as error:
         print(f"Redis error: {error}", file=sys.stderr, flush=True)
         return jsonify({
