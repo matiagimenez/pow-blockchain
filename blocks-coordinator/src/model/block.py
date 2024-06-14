@@ -29,18 +29,15 @@ class Block:
         if (not self.hash.startswith(hash_challenge)):
             return False
 
+        # TODO: Revisar como se concatena las transacciones
         serialized_objects = [json.dumps(obj) for obj in self.data]
-        # Une las cadenas JSON con comas y encierra en corchetes para formar una lista JSON válida
         data_as_string = '[' + ','.join(serialized_objects) + ']'
 
-        block_content = f"{data_as_string}{str(self.index).strip()}{str(self.previous_hash).strip()}{str(self.timestamp).strip()}"
+        block_content = f"{self.nonce}{data_as_string}{str(self.index).strip()}{str(self.previous_hash).strip()}{str(self.timestamp).strip()}"
 
-        nonce_bytes = str(self.nonce).strip().encode("utf-8")
         block_content_bytes = block_content.encode("utf-8")
 
-        recalculated_block_hash = md5(
-            nonce_bytes + block_content_bytes).hexdigest()
-
+        recalculated_block_hash = md5(block_content_bytes).hexdigest()
         print(recalculated_block_hash, file=sys.stdout, flush=True)
 
         return recalculated_block_hash == self.hash

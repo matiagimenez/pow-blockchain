@@ -3,6 +3,7 @@ import pika
 import json
 import sys
 import time
+from hashlib import md5
 import logging
 import os
 from redis import exceptions as redis_exceptions
@@ -22,6 +23,7 @@ CPU_HASH_CHALLENGE = os.environ.get("CPU_HASH_CHALLENGE")
 GPU_HASH_CHALLENGE = os.environ.get("GPU_HASH_CHALLENGE")
 
 # Variables globales para mantener las conexiones
+global rabbitmq
 rabbitmq = rabbit_connect()
 redis = redis_connect()
 
@@ -76,16 +78,8 @@ def build_block(transactions):
 
             print(
                 f"{datetime.now()}: Block {new_block.index} [{new_block.previous_hash}] created ...")
-        except redis_exceptions.ConnectionError as error:
-            print("Connection to Redis lost. Reconnecting...",
-                  file=sys.stderr, flush=True)
-            redis = redis_connect()
         except redis_exceptions.RedisError as error:
             print(f"Redis error: {error}", file=sys.stderr, flush=True)
-        except pika.exceptions.AMQPConnectionError as connection_error:
-            print("Connection to RabbitMQ lost. Reconnecting...",
-                  file=sys.stderr, flush=True)
-            rabbitmq = rabbit_connect()
         except rabbitmq_exceptions.AMQPError as error:
             print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
         except Exception as e:
@@ -108,9 +102,6 @@ def process_transactions():
             else:
                 build_block(transactions)
                 break
-    except pika.exceptions.AMQPConnectionError as connection_error:
-        print("Connection to RabbitMQ lost. Reconnecting...")
-        rabbitmq = rabbit_connect()
     except rabbitmq_exceptions.AMQPError as error:
         print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
     except Exception as e:
@@ -159,20 +150,12 @@ def registerTransaction():
             "status": "200",
             "description": "Transaction registered successfully"
         })
-    except redis_exceptions.ConnectionError as error:
-        print("Connection to Redis lost. Reconnecting...",
-              file=sys.stderr, flush=True)
-        redis = redis_connect()
     except redis_exceptions.RedisError as error:
         print(f"Redis error: {error}", file=sys.stderr, flush=True)
         return jsonify({
             "status": "500",
             "description": "Internal server error"
         })
-    except pika.exceptions.AMQPConnectionError as connection_error:
-        print("Connection to RabbitMQ lost. Reconnecting...",
-              file=sys.stderr, flush=True)
-        rabbitmq = rabbit_connect()
     except rabbitmq_exceptions.AMQPError as error:
         print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
         return jsonify({
@@ -231,10 +214,6 @@ def validateBlock():
             "description": f"Block {new_block.index} created",
         })
 
-    except redis_exceptions.ConnectionError as error:
-        print("Connection to Redis lost. Reconnecting...",
-              file=sys.stderr, flush=True)
-        redis = redis_connect()
     except redis_exceptions.RedisError as error:
         print(f"Redis error: {error}", file=sys.stderr, flush=True)
         return jsonify({

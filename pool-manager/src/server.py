@@ -60,11 +60,6 @@ def create_mining_subtasks(block, challenge):
                 body=json.dumps({"challenge": challenge, "mining_task": subtask.to_dict()}))
 
         return True
-    except pika.exceptions.AMQPConnectionError:
-        print("Connection to RabbitMQ lost. Reconnecting...",
-              file=sys.stderr, flush=True)
-        rabbitmq = rabbit_connect()
-        return False
     except rabbitmq_exceptions.AMQPError as error:
         print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
         return False
@@ -91,11 +86,6 @@ def check_node_status(node_ip):
             if current_time - last_keep_alive <= EXPIRATION_TIME:
                 return True
         return False
-    except redis_exceptions.ConnectionError as error:
-        print("Connection to Redis lost. Reconnecting...",
-              file=sys.stderr, flush=True)
-        redis = redis_connect()
-        return False
     except redis_exceptions.RedisError as error:
         print(f"Redis error: {error}", file=sys.stderr, flush=True)
         return False
@@ -110,11 +100,6 @@ def get_gpu_active_nodes():
             if check_node_status(node_ip.decode()):
                 active_nodes += 1
         return gpu_active_nodes
-    except redis_exceptions.ConnectionError as error:
-        print("Connection to Redis lost. Reconnecting...",
-              file=sys.stderr, flush=True)
-        redis = redis_connect()
-        return 0
     except redis_exceptions.RedisError as error:
         print(f"Redis error: {error}", file=sys.stderr, flush=True)
         return 0
@@ -125,6 +110,11 @@ def check_pool_status():
     if (gpu_active_nodes == 0):
         print("Creating cloud miners...")
         # TODO:  Iniciar mineros CPU en la nube
+
+
+def check_queue_status():
+    print("Checking queue status...")
+    # TODO: Iniciar mineros CPU en la nube
 
 
 start_cronjob(check_pool_status, EXPIRATION_TIME)
@@ -164,10 +154,6 @@ def consume_mining_tasks():
 
             if (result):
                 rabbitmq.basic_ack(method.delivery_tag)
-        except pika.exceptions.AMQPConnectionError:
-            print("Connection to RabbitMQ lost. Reconnecting...",
-                  file=sys.stderr, flush=True)
-            rabbitmq = rabbit_connect()
         except rabbitmq_exceptions.AMQPError as error:
             print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
         except Exception as e:

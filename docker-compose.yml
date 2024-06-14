@@ -63,9 +63,9 @@ services:
             - REDIS_HOST=redis
             - REDIS_PORT=6379
             - REDIS_PASSWORD=
-            - MAX_RANGE = 2000000
-            - CPU_MINERS_COUNT = 4
-            - EXPIRATION_TIME = 15
+            - MAX_RANGE=10000000
+            - CPU_MINERS_COUNT=4
+            - EXPIRATION_TIME=15
         networks:
             - blockchain-network
 networks:
