@@ -1,0 +1,268 @@
+name: CI/CD pipeline
+
+on:
+    push:
+        branches: ['main']
+jobs:
+    build-images:
+        name: Build and Push Docker Image
+        if: startsWith(github.event.head_commit.message, '(build)')
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
+                  password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+            - name: Build and push coordinator service image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./coordinador
+                  push: true
+                  tags: ${{ secrets.DOCKER_HUB_USERNAME }}/blockchain-coordinator:latest
+
+    configure-backend:
+        name: Configure backend for terraform state
+        if: startsWith(github.event.head_commit.message, '(up)')
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4.1.6
+
+            - name: GCP authentication
+              uses: google-github-actions/auth@v2
+              with:
+                  credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+
+            - name: Check and Create GCS Bucket for Terraform state
+              env:
+                  BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+                  PROJECT_ID: ${{ secrets.GOOGLE_CLOUD_PROJECT_ID }}
+              run: |
+                  gcloud config set project $PROJECT_ID
+
+                  echo '${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}' > credentials.json
+                  gcloud auth activate-service-account --key-file=credentials.json
+                  gcloud config set pass_credentials_to_gsutil true
+
+                  # Check if the bucket exists
+                  BUCKET_URI="gs://${BUCKET_NAME}/"
+                  if gsutil ls -p $PROJECT_ID | grep $BUCKET_URI; then
+                    echo "Bucket $BUCKET_NAME already exists."
+                  else
+                    echo "Creating bucket $BUCKET_NAME..."
+                    gsutil mb -p $PROJECT_ID $BUCKET_URI
+                  fi
+
+    infra-up:
+        name: Build Kubernetes infrastructure
+        if: startsWith(github.event.head_commit.message, '(up)')
+        runs-on: ubuntu-latest
+        env:
+            BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            # Setup de CLI de Terraform
+            - name: Terraform setup
+              uses: hashicorp/setup-terraform@v3
+
+            # Crea el cluster en la nube.
+            - name: Terraform init
+              working-directory: terraform
+              env:
+                  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+              run: |
+                  echo '${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}' > credentials.json
+
+                  ls -lah
+
+                  PREFIX="cluster/state"
+
+                  terraform init --reconfigure \
+                    --backend-config "bucket=${BUCKET_NAME}" \
+                    --backend-config "prefix=${PREFIX}"
+
+                  terraform validate
+
+                  terraform plan -lock=false
+
+                  terraform apply -lock=false --auto-approve
+
+    deploy-apps:
+        name: Deploy apps and services
+        needs: infra-up
+        if: startsWith(github.event.head_commit.message, '(up)')
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            # Configuración CLI Google Cloud.
+            - name: Google Cloud authentication
+              uses: google-github-actions/auth@v2
+              with:
+                  credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+
+            - name: Google Cloud kubectl plugin
+              uses: google-github-actions/setup-gcloud@v2
+              with:
+                  version: '>= 363.0.0'
+                  install_components: 'kubectl'
+
+            - name: Google Cloud kubectl cluster metadata
+              run: |
+                  REGION="us-central1-a"
+                  gcloud info
+                  gcloud components list
+                  gcloud container clusters get-credentials primary --region=${REGION}
+
+            - name: Create Redis namespace
+              run: |
+                  if ! kubectl get namespace redis-namespace > /dev/null 2>&1; then
+                    kubectl create namespace redis-namespace
+                  else
+                    echo "Namespace redis-namespace already exists."
+                  fi
+
+            - name: Create RabbitMQ namespace
+              run: |
+                  if ! kubectl get namespace rabbitmq-namespace > /dev/null 2>&1; then
+                    kubectl create namespace rabbitmq-namespace
+                  else
+                    echo "Namespace rabbitmq-namespace already exists."
+                  fi
+
+            - name: Create applications namespace
+              run: |
+                  if ! kubectl get namespace applications-namespace > /dev/null 2>&1; then
+                    kubectl create namespace applications-namespace
+                  else
+                    echo "Namespace applications-namespace already exists."
+                  fi
+
+            - name: RabbitMQ deploy
+              working-directory: kubernetes
+              run: |
+                  if kubectl get pod rabbitmq-server-0 -n rabbitmq-namespace > /dev/null 2>&1; then
+                    echo "RabbitMQ server pod already exists. Skipping deployment."
+                  else
+                    kubectl apply -f "https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"
+                    
+                    echo "Waiting for RabbitMQ Operator to be available..."
+                    while [[ $(kubectl get pods -n rabbitmq-system -l app.kubernetes.io/name=rabbitmq-cluster-operator -o jsonpath='{.items[*].status.phase}') != "Running" ]]; do
+                      echo "RabbitMQ Operator is not ready yet. Waiting..."
+                      sleep 10
+                    done
+                    
+                    kubectl apply -f services/rabbitmq.yml
+
+                    echo "Waiting for RabbitMQ pods to be available..."
+                    while [[ $(kubectl get pods -n rabbitmq-namespace -l app.kubernetes.io/component=rabbitmq -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' | sort | uniq) != "Running" ]]; do
+                      echo "RabbitMQ pods are not ready yet. Waiting..."
+                      sleep 10
+                    done
+                    
+                    kubectl exec -it rabbitmq-server-0 -n rabbitmq-namespace -- rabbitmqctl set_policy ha-policy ".*sobel.*" '{"ha-mode":"exactly","ha-params":2,"ha-sync-mode":"automatic"}'
+                  fi
+            - name: Create RabbitMQ config
+              working-directory: kubernetes
+              run: |
+                  RABBITMQ_PASSWORD=$(kubectl get secret rabbitmq-default-user -o jsonpath="{.data.password}" -n rabbitmq-namespace | base64 --decode)
+                  RABBITMQ_USER=$(kubectl get secret rabbitmq-default-user -o jsonpath="{.data.username}" -n rabbitmq-namespace | base64 --decode)
+
+                  # Crear un nuevo ConfigMap con las credenciales de RabbitMQ
+                  cat <<EOF | kubectl apply -f -
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: rabbit-config
+                    namespace: applications-namespace
+                  data:
+                    RABBITMQ_USER: $RABBITMQ_USER
+                    RABBITMQ_PASSWORD: $RABBITMQ_PASSWORD
+                    RABBITMQ_HOST: rabbitmq.rabbitmq-namespace.svc.cluster.local
+                  EOF
+
+            - name: Deploy Redis
+              working-directory: kubernetes
+              run: |
+                  if ! kubectl get pods -n redis-namespace | grep -q 'redis'; then
+                    # Si no hay pods de Redis, proceder con la instalación
+                    helm repo add bitnami https://charts.bitnami.com/bitnami
+                    helm install redis bitnami/redis --version 19.5.2 --set namespaceOverride="redis-namespace"
+                  else
+                    echo "Redis is already installed. Skipping deployment."
+                  fi
+
+            - name: Create Redis config
+              working-directory: kubernetes
+              run: |
+                  echo "Waiting for Redis pods to be available..."
+                  while [[ $(kubectl get pods -n redis-namespace --field-selector=status.phase=Running -l app.kubernetes.io/name=redis -o jsonpath='{.items[*].status.phase}' | grep -c "Running") -lt 1 ]]; do
+                    echo "Redis pods are not ready yet. Waiting..."
+                    sleep 10
+                  done
+
+                  REDIS_PASSWORD=$(kubectl get secret --namespace redis-namespace redis -o jsonpath="{.data.redis-password}" | base64 -d)
+
+                  # Crear un nuevo ConfigMap con las credenciales de Redis
+                  cat <<EOF | kubectl apply -f -
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: redis-config
+                    namespace: applications-namespace
+                  data:
+                    REDIS_PASSWORD: $REDIS_PASSWORD
+                    REDIS_HOST: redis-master.redis-namespace.svc.cluster.local
+                    REDIS_PORT: '6379'
+                  EOF
+
+            - name: Create applications config
+              working-directory: kubernetes
+              run: |
+                  kubectl apply -f config.yml
+
+            - name: Deploy applications
+              working-directory: kubernetes
+              run: |
+                  kubectl apply -f applications/coordinator.yml
+                  kubectl apply -f applications/coordinator-service.yml
+
+    infra-destroy:
+        name: Destroy Kubernetes infrastructure
+        if: startsWith(github.event.head_commit.message, '(down)')
+        runs-on: ubuntu-latest
+        env:
+            BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+              # Setup de CLI de Terraform
+            - name: Terraform setup
+              uses: hashicorp/setup-terraform@v3
+
+              # Crea el cluster en la nube.
+            - name: Terraform init
+              working-directory: terraform
+              env:
+                  GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+              run: |
+                  echo '${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}' > credentials.json
+
+                  ls -lah
+
+                  PREFIX="cluster/state"
+
+                  terraform init --reconfigure \
+                    --backend-config "bucket=${BUCKET_NAME}" \
+                    --backend-config "prefix=${PREFIX}"
+
+                  terraform destroy -lock=false --auto-approve
