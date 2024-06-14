@@ -11,6 +11,7 @@ from flask import Flask, jsonify
 from pika import exceptions as rabbitmq_exceptions
 from model.block import Block
 from plugins.rabbitmq import rabbit_connect
+from plugins.scheduler import start_cronjob
 from utils.check_gpu import check_for_nvidia_smi
 from utils.find_nonce import find_nonce_with_prefix
 
@@ -18,7 +19,9 @@ app = Flask(__name__)
 
 # Variables globales para mantener las conexiones
 rabbitmq, queue_name = rabbit_connect()
-coordinator_url = os.environ.get("COORDINATOR_URL")
+BLOCKS_COORDINATOR_URL = os.environ.get("BLOCKS_COORDINATOR_URL")
+POOL_MANAGER_URL = os.environ.get("POOL_MANAGER_URL")
+KEEP_ALIVE_INTERVAL = int(os.environ.get("KEEP_ALIVE_INTERVAL"))
 
 
 @ app.route("/status")
@@ -91,7 +94,7 @@ def consume_tasks():
 
             # Envía el bloque con los datos de hash y nonce al coordinador para que lo valide
             response = requests.post(
-                coordinator_url, json.dumps(block.to_dict()))
+                BLOCKS_COORDINATOR_URL, json.dumps(block.to_dict()))
             print(response.text, file=sys.stdout, flush=True)
 
         except rabbitmq_exceptions.AMQPError as error:
@@ -104,8 +107,28 @@ def consume_tasks():
     rabbitmq.start_consuming()
 
 
-# Iniciar el consumidor al arrancar la aplicación Flask
+def send_keep_alive():
+    try:
+        external_ip = requests.get(
+            'https://checkip.amazonaws.com').text.strip()
+
+        body = {
+            "address": external_ip,
+            "machine_type": "GPU" if gpu_available else "CPU"
+        }
+
+        response = requests.post(
+            POOL_MANAGER_URL, json.dumps(body.to_dict()))
+        print(response.text, file=sys.stdout, flush=True)
+
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr, flush=True)
+
+
 time.sleep(5)
 gpu_available = check_for_nvidia_smi()
+# Iniciar el cronjob para emitir los keep-alive
+start_cronjob(send_keep_alive, KEEP_ALIVE_INTERVAL)
+# Iniciar el consumidor al arrancar la aplicación Flask
 consumer_thread = threading.Thread(target=consume_tasks)
 consumer_thread.start()
