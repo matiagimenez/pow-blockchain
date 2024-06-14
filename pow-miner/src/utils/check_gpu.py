@@ -7,7 +7,7 @@ def check_for_nvidia_smi():
             ['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode == 0:
             print(result.stdout.decode('utf-8'))
-            return True
+            return False # True (inhabilito el uso de GPU por el momento)
         else:
             return False
     except FileNotFoundError:
