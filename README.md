@@ -1,0 +1,20 @@
+# POW Blockchain
+
+## Introduction
+
+A blockchain is a distributed database where a set of nodes interact in decentralized mode (p2p) to store a set of consistent records between each of the nodes.
+
+The consistency of such information, in a PoW (Proof of Work) architecture, is guaranteed by a process called mining, which, due to its complexity, usually runs on the GPU.
+
+To support blockchain developments, you will use distributed system services. This is the answer to the need for horizontal scalability.
+
+-   Inherent to the existence of a distributed system is the existence of two or more nodes.
+-   At the core of a distributed system is asynchronous processing.
+
+### Structure of the blockchain
+
+The basic concept of blockchain is quite simple: a database that maintains a continuously growing list of sorted records. Something very similar to a database transaction log.
+
+As can be seen in the image, there is an order and sequentiality in the operations that are recorded in a blockchain, so that, although the content of each block can be generated in a distributed manner, its processing must be centralized. The objective of this project is to present a prototype architecture that allows to parallelize and distribute the generation of blocks.
+
+The main advantage of this architecture is that, if two operations are not mutually exclusive or sequential, they can be performed in parallel.
