@@ -43,7 +43,8 @@ services:
             - REDIS_HOST=redis
             - REDIS_PORT=6379
             - REDIS_PASSWORD=
-            - HASH_CHALLENGE=0000
+            - CPU_HASH_CHALLENGE=0000
+            - GPU_HASH_CHALLENGE=000000
         networks:
             - blockchain-network
 networks:

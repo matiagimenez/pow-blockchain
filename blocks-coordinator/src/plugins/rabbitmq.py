@@ -29,7 +29,10 @@ def rabbit_connect():
 
             # Declaro exchange para las tasks de mineros
             channel.exchange_declare(
-                exchange='workers', exchange_type='fanout', durable=True)
+                exchange='blockchain', exchange_type='direct', durable=True, auto_delete=False)
+            channel.queue_declare(queue='blocks', durable=True)
+            channel.queue_bind(
+                exchange='blockchain', queue='blocks', routing_key='b')
 
             return channel
         except pika.exceptions.AMQPConnectionError:

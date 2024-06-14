@@ -18,7 +18,8 @@ from plugins.scheduler import start_cronjob
 app = Flask(__name__)
 # logging.basicConfig(level=logging.DEBUG)
 
-hash_challenge = os.environ.get("HASH_CHALLENGE")
+CPU_HASH_CHALLENGE = os.environ.get("CPU_HASH_CHALLENGE")
+GPU_HASH_CHALLENGE = os.environ.get("GPU_HASH_CHALLENGE")
 
 # Variables globales para mantener las conexiones
 rabbitmq = rabbit_connect()
@@ -61,16 +62,25 @@ def build_block(transactions):
 
             properties = pika.BasicProperties(
                 delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
+            
+            # TODO: Consultar estado del pool de mineros y asignar el challenge dependiendo del estado actual.
+            #? Si GPU_COUNT > 0 => challenge GPU_HASH_CHALLENGE
+            #? Si GPU_COUNT = 0 => challenge CPU_HASH_CHALLENGE
+            #* Por el momento, la GPU está inhabilitada en los mineros, por lo cuál asigno directamente CPU_HASH_CHALLENGE
+            challenge = CPU_HASH_CHALLENGE
 
             rabbitmq.basic_publish(
-                exchange='workers', routing_key='',
+                exchange='blockchain', routing_key='b',
                 properties=properties,
-                body=json.dumps({"challenge": str(hash_challenge), "block": new_block.to_dict()}))
+                body=json.dumps({"challenge": str(challenge), "block": new_block.to_dict()}))
 
             print(
                 f"{datetime.now()}: Block {new_block.index} [{new_block.previous_hash}] created ...")
         except redis_exceptions.RedisError as error:
             print(f"Redis error: {error}", file=sys.stderr, flush=True)
+        except pika.exceptions.AMQPConnectionError as connection_error:
+            print("Connection to RabbitMQ lost. Reconnecting...", file=sys.stderr, flush=True)
+            rabbitmq = rabbit_connect()
         except rabbitmq_exceptions.AMQPError as error:
             print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
         except Exception as e:
@@ -93,6 +103,9 @@ def process_transactions():
             else:
                 build_block(transactions)
                 break
+    except pika.exceptions.AMQPConnectionError as connection_error:
+        print("Connection to RabbitMQ lost. Reconnecting...")
+        rabbitmq = rabbit_connect()
     except rabbitmq_exceptions.AMQPError as error:
         print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
     except Exception as e:
@@ -147,6 +160,9 @@ def registerTransaction():
             "status": "500",
             "description": "Internal server error"
         })
+    except pika.exceptions.AMQPConnectionError as connection_error:
+        print("Connection to RabbitMQ lost. Reconnecting...", file=sys.stderr, flush=True)
+        rabbitmq = rabbit_connect()
     except rabbitmq_exceptions.AMQPError as error:
         print(f"RabbitMQ error: {error}", file=sys.stderr, flush=True)
         return jsonify({
