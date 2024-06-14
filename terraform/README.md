@@ -9,7 +9,7 @@
 -   Ejecutar terraform para crear la instancia de la VM en GCP.
 
 ```bash
-BUCKET_NAME="pow_blockchain_2024"
+BUCKET_NAME="tf_pow_blockchain"
 PREFIX="cluster/state"
 terraform init --reconfigure --backend-config "bucket=${BUCKET_NAME}" --backend-config "prefix=${PREFIX}"
 terraform plan -lock=false
