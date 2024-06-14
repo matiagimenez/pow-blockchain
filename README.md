@@ -23,3 +23,5 @@ The main advantage of this architecture is that, if two operations are not mutua
 
 ![image](https://github.com/matiasgimenezdev/pow-blockchain/assets/117539520/76aaecac-0942-4733-848d-aa4c080a3736)
 
+### Designed architecture
+![Blockchain](https://github.com/matiasgimenezdev/pow-blockchain/assets/117539520/84843c63-6ce6-425b-bb9e-60b1301a6e7c)
