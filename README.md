@@ -1,4 +1,4 @@
-# POW Blockchain
+![sdypp grupo 1](https://github.com/matiasgimenezdev/pow-blockchain/assets/117539520/4962a098-5393-4c6d-bcdc-477619690d84)# POW Blockchain
 
 ## Introduction
 
@@ -23,5 +23,6 @@ The main advantage of this architecture is that, if two operations are not mutua
 
 ![image](https://github.com/matiasgimenezdev/pow-blockchain/assets/117539520/76aaecac-0942-4733-848d-aa4c080a3736)
 
-### Designed architecture
-![Blockchain](https://github.com/matiasgimenezdev/pow-blockchain/assets/117539520/84843c63-6ce6-425b-bb9e-60b1301a6e7c)
+### Designed architecture [URL](https://miro.com/app/board/uXjVK9Am-aU=/?share_link_id=894524781583)
+
+![Blockchain](https://github.com/matiasgimenezdev/pow-blockchain/assets/117539520/2d286bef-23de-43a4-81a5-5a3654c88f0e)
