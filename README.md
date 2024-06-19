@@ -1,5 +1,3 @@
-![sdypp grupo 1](https://github.com/matiasgimenezdev/pow-blockchain/assets/117539520/4962a098-5393-4c6d-bcdc-477619690d84)# POW Blockchain
-
 ## Introduction
 
 A blockchain is a distributed database where a set of nodes interact in decentralized mode (p2p) to store a set of consistent records between each of the nodes.
