@@ -1,4 +1,3 @@
-version: '3.8'
 services:
     redis:
         container_name: redis
@@ -8,7 +7,7 @@ services:
             - '6379:6379'
             - '8001:8001'
         volumes:
-            - ./redis:/data
+            - redis:/data
         networks:
             - blockchain-network
 
@@ -18,7 +17,7 @@ services:
         restart: always
         hostname: 'rabbit'
         volumes:
-            - ./rabbitmq/data:/var/lib/rabbitmq
+            - rabbitmq:/var/lib/rabbitmq
         ports:
             - '15672:15672'
             - '5672:5672'
@@ -43,8 +42,7 @@ services:
             - REDIS_HOST=redis
             - REDIS_PORT=6379
             - REDIS_PASSWORD=
-            - CPU_HASH_CHALLENGE=0000
-            - GPU_HASH_CHALLENGE=000000
+            - HASH_CHALLENGE=000
         networks:
             - blockchain-network
 
@@ -63,10 +61,19 @@ services:
             - REDIS_HOST=redis
             - REDIS_PORT=6379
             - REDIS_PASSWORD=
-            - MAX_RANGE=10000000
-            - CPU_MINERS_COUNT=4
+            - CPU_HASH_CHALLENGE=0000
+            - GPU_HASH_CHALLENGE=000000
+            - KEEP_ALIVE_INTERVAL=25
+            - MAX_RANGE=100000
+            - CPU_MINERS_COUNT=5
             - EXPIRATION_TIME=15
+            - CREDENTIALS_PATH=/credentials/credentials.json
         networks:
             - blockchain-network
+        volumes:
+            - ./pool-manager/credentials.json:/credentials/credentials.json
 networks:
     blockchain-network:
+volumes:
+    redis:
+    rabbitmq:

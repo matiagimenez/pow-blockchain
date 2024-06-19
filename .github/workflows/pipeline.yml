@@ -1,30 +1,9 @@
-name: CI/CD pipeline
+name: Applications pipeline
 
 on:
     push:
         branches: ['main']
 jobs:
-    build-images:
-        name: Build and Push Docker Image
-        if: startsWith(github.event.head_commit.message, '(build)')
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
-
-            - name: Login to Docker Hub
-              uses: docker/login-action@v3
-              with:
-                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
-                  password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-
-            - name: Build and push coordinator service image
-              uses: docker/build-push-action@v5
-              with:
-                  context: ./coordinador
-                  push: true
-                  tags: ${{ secrets.DOCKER_HUB_USERNAME }}/blockchain-coordinator:latest
-
     configure-backend:
         name: Configure backend for terraform state
         if: startsWith(github.event.head_commit.message, '(up)')
@@ -60,6 +39,7 @@ jobs:
 
     infra-up:
         name: Build Kubernetes infrastructure
+        needs: configure-backend
         if: startsWith(github.event.head_commit.message, '(up)')
         runs-on: ubuntu-latest
         env:
@@ -82,7 +62,7 @@ jobs:
 
                   ls -lah
 
-                  PREFIX="cluster/state"
+                  PREFIX="terraform"
 
                   terraform init --reconfigure \
                     --backend-config "bucket=${BUCKET_NAME}" \
@@ -103,6 +83,26 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
+                  password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+            - name: Build and push blocks coordinator service image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./blocks-coordinator
+                  push: true
+                  tags: ${{ secrets.DOCKER_HUB_USERNAME }}/blockchain-blocks-coordinator:1.0.0
+
+            - name: Build and push pool manager service image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./pool-manager
+                  push: true
+                  tags: ${{ secrets.DOCKER_HUB_USERNAME }}/blockchain-pool-manager:1.0.1
+
             # Configuración CLI Google Cloud.
             - name: Google Cloud authentication
               uses: google-github-actions/auth@v2
@@ -117,7 +117,7 @@ jobs:
 
             - name: Google Cloud kubectl cluster metadata
               run: |
-                  REGION="us-central1-a"
+                  REGION="us-east1-b"
                   gcloud info
                   gcloud components list
                   gcloud container clusters get-credentials primary --region=${REGION}
@@ -153,13 +153,13 @@ jobs:
                     echo "RabbitMQ server pod already exists. Skipping deployment."
                   else
                     kubectl apply -f "https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"
-                    
+
                     echo "Waiting for RabbitMQ Operator to be available..."
                     while [[ $(kubectl get pods -n rabbitmq-system -l app.kubernetes.io/name=rabbitmq-cluster-operator -o jsonpath='{.items[*].status.phase}') != "Running" ]]; do
                       echo "RabbitMQ Operator is not ready yet. Waiting..."
                       sleep 10
                     done
-                    
+
                     kubectl apply -f services/rabbitmq.yml
 
                     echo "Waiting for RabbitMQ pods to be available..."
@@ -167,9 +167,21 @@ jobs:
                       echo "RabbitMQ pods are not ready yet. Waiting..."
                       sleep 10
                     done
-                    
-                    kubectl exec -it rabbitmq-server-0 -n rabbitmq-namespace -- rabbitmqctl set_policy ha-policy ".*sobel.*" '{"ha-mode":"exactly","ha-params":2,"ha-sync-mode":"automatic"}'
+
+                    sleep 20
+
+                    kubectl exec -it rabbitmq-server-0 -n rabbitmq-namespace -- rabbitmqctl set_policy ha-policy-transactions ".*transactions.*" '{"ha-mode":"exactly","ha-params":2,"ha-sync-mode":"automatic"}'
+                    kubectl exec -it rabbitmq-server-0 -n rabbitmq-namespace -- rabbitmqctl set_policy ha-policy-blocks ".*blocks.*" '{"ha-mode":"exactly","ha-params":2,"ha-sync-mode":"automatic"}'
+                    kubectl exec -it rabbitmq-server-0 -n rabbitmq-namespace -- rabbitmqctl set_policy ha-policy-workers ".*workers.*" '{"ha-mode":"exactly","ha-params":2,"ha-sync-mode":"automatic"}'
                   fi
+
+            - name: Wait for rabbit service to be ready
+              run: |
+                  while [[ -z "$(kubectl get svc rabbitmq -n rabbitmq-namespace -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]]; do
+                    echo "Waiting for rabbitmq-service to be ready..."
+                    sleep 10
+                  done
+
             - name: Create RabbitMQ config
               working-directory: kubernetes
               run: |
@@ -229,12 +241,136 @@ jobs:
               run: |
                   kubectl apply -f config.yml
 
-            - name: Deploy applications
+            - name: Create GCP config
               working-directory: kubernetes
               run: |
-                  kubectl apply -f applications/coordinator.yml
-                  kubectl apply -f applications/coordinator-service.yml
+                  echo '${{ secrets.GOOGLE_CLOUD_CREDENTIALS}}' > credentials.json
 
+                  kubectl create configmap -n applications-namespace credentials-config --from-file=credentials.json || echo "GCP config. already exists."
+
+            - name: Deploy blocks coordinator
+              working-directory: kubernetes/applications
+              run: |
+                  kubectl apply -f blocks-coordinator.yml
+                  kubectl apply -f blocks-coordinator-service.yml
+
+            - name: Deploy pool manager
+              working-directory: kubernetes/applications
+              run: |
+                  kubectl apply -f pool-manager.yml
+                  kubectl apply -f pool-manager-service.yml
+
+            - name: Wait for blocks coordinator service to be ready
+              run: |
+                  while [[ -z "$(kubectl get svc coordinator-service -n applications-namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]]; do
+                    echo "Waiting for coordinator-service to be ready..."
+                    sleep 10
+                  done
+
+            - name: Wait for pool manager service to be ready
+              run: |
+                  while [[ -z "$(kubectl get svc pool-manager-service -n applications-namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]]; do
+                    echo "Waiting for pool-manager-service to be ready..."
+                    sleep 10
+                  done
+
+            - name: Update Cloudflare DNS records
+              env:
+                  CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+                  CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+              run: |
+                  RABBIT_SERVICE_IP=$(kubectl get svc rabbitmq -n rabbitmq-namespace -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+                  if [ -z "$RABBIT_SERVICE_IP" ]; then
+                      echo "Failed to fetch rabbitmq IP"
+                      exit 1
+                  fi
+
+                  POOL_MANAGER_SERVICE_IP=$(kubectl get svc pool-manager-service -n applications-namespace -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+                  if [ -z "$POOL_MANAGER_SERVICE_IP" ]; then
+                      echo "Failed to fetch pool-manager IP"
+                      exit 1
+                  fi
+
+                  BLOCKS_COORDINATOR_SERVICE_IP=$(kubectl get svc coordinator-service -n applications-namespace -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+                  if [ -z "$BLOCKS_COORDINATOR_SERVICE_IP" ]; then
+                      echo "Failed to fetch blocks-coordinator IP"
+                      exit 1
+                  fi
+
+                  get_dns_record_id() {
+                    local record_name="$1"
+                    local zone_id="$2"
+                    local token="$3"
+
+                    local api_url="https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records?type=A&name=$record_name"
+                    local response=$(curl -s -X GET "$api_url" \
+                      -H "Authorization: Bearer $token" \
+                      -H "Content-Type: application/json")
+
+                    local record_id=$(echo "$response" | jq -r '.result[0].id')
+
+                    echo "$record_id"
+                  }
+
+                  # Obtener dinámicamente los IDs de los registros A
+                  RABBIT_DNS_RECORD_ID=$(get_dns_record_id "rabbit.inventomate.xyz" "$CLOUDFLARE_ZONE_ID" "$CLOUDFLARE_TOKEN")
+                  POOL_MANAGER_RECORD_ID=$(get_dns_record_id "poolmanager.inventomate.xyz" "$CLOUDFLARE_ZONE_ID" "$CLOUDFLARE_TOKEN")
+                  BLOCKS_COORDINATOR_RECORD_ID=$(get_dns_record_id "coordinator.inventomate.xyz" "$CLOUDFLARE_ZONE_ID" "$CLOUDFLARE_TOKEN")
+
+                  curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records/$RABBIT_DNS_RECORD_ID" \
+                    -H "Authorization: Bearer $CLOUDFLARE_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    --data '{
+                      "type": "A",
+                      "name": "rabbit.inventomate.xyz",
+                      "content": "'"$RABBIT_SERVICE_IP"'",
+                      "ttl": 120,
+                      "proxied": false
+                    }'
+
+                  curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records/$POOL_MANAGER_RECORD_ID" \
+                    -H "Authorization: Bearer $CLOUDFLARE_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    --data '{
+                      "type": "A",
+                      "name": "poolmanager.inventomate.xyz",
+                      "content": "'"$POOL_MANAGER_SERVICE_IP"'",
+                      "ttl": 120,
+                      "proxied": false
+                    }'
+                    
+                  curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/dns_records/$BLOCKS_COORDINATOR_RECORD_ID" \
+                    -H "Authorization: Bearer $CLOUDFLARE_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    --data '{
+                      "type": "A",
+                      "name": "coordinator.inventomate.xyz",
+                      "content": "'"$BLOCKS_COORDINATOR_SERVICE_IP"'",
+                      "ttl": 120,
+                      "proxied": false
+                    }'
+
+            - name: Generate miner .env
+              run: |
+                  RABBITMQ_PASSWORD=$(kubectl get secret rabbitmq-default-user -o jsonpath="{.data.password}" -n rabbitmq-namespace | base64 --decode)
+                  RABBITMQ_USER=$(kubectl get secret rabbitmq-default-user -o jsonpath="{.data.username}" -n rabbitmq-namespace | base64 --decode)
+
+                  echo "POOL_MANAGER_URL=http://poolmanager.inventomate.xyz:5000" > minero/.env.prod
+                  echo "BLOCKS_COORDINATOR_URL=http://coordinator.inventomate.xyz:5000/result" >> minero/.env.prod
+                  echo "RABBITMQ_HOST=rabbit.inventomate.xyz" >> minero/.env.prod
+                  echo "RABBITMQ_USER=$RABBITMQ_USER" >> minero/.env.prod
+                  echo "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" >> minero/.env.prod
+                  echo "GPU_MAX_RANGE=80000" >> minero/.env.prod
+                  echo "KEEP_ALIVE_INTERVAL=5" >> minero/.env.prod
+            - name: Build and push miner service image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./minero
+                  push: true
+                  tags: ${{ secrets.DOCKER_HUB_USERNAME }}/blockchain-miner:1.0.0
     infra-destroy:
         name: Destroy Kubernetes infrastructure
         if: startsWith(github.event.head_commit.message, '(down)')
@@ -259,7 +395,7 @@ jobs:
 
                   ls -lah
 
-                  PREFIX="cluster/state"
+                  PREFIX="terraform"
 
                   terraform init --reconfigure \
                     --backend-config "bucket=${BUCKET_NAME}" \

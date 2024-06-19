@@ -1,5 +1,6 @@
 import pika
 import os
+import sys
 import time
 
 
@@ -20,18 +21,14 @@ def rabbit_connect():
             )
             channel = connection.channel()
 
-            # Declaro queue para las transacciones
+            # Declaro exchange para las tasks de mineros
             channel.exchange_declare(
                 exchange='blockchain', exchange_type='direct', durable=True, auto_delete=False)
-            channel.queue_declare(queue='blocks', durable=True)
-            channel.queue_bind(
-                exchange='blockchain', queue='blocks', routing_key='bl')
-
-            # Declaro exchange para las tasks de mineros
             channel.queue_declare(queue='workers', durable=True)
             channel.queue_bind(
                 exchange='blockchain', queue='workers', routing_key='w')
 
+            # return channel
             return channel
         except pika.exceptions.AMQPConnectionError:
             return None
@@ -40,7 +37,8 @@ def rabbit_connect():
         channel = connect()
         if channel:
             break
-        print("Failed to connect to RabbitMQ. Retrying in 5 seconds...")
+        print("Failed to connect to RabbitMQ. Retrying in 5 seconds...",
+              file=sys.stdout, flush=True)
         time.sleep(5)
 
     return channel

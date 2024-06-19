@@ -2,9 +2,6 @@ import ast
 import pika
 import json
 import sys
-import time
-from hashlib import md5
-import logging
 import os
 from redis import exceptions as redis_exceptions
 from pika import exceptions as rabbitmq_exceptions
@@ -19,11 +16,9 @@ from plugins.scheduler import start_cronjob
 app = Flask(__name__)
 # logging.basicConfig(level=logging.DEBUG)
 
-CPU_HASH_CHALLENGE = os.environ.get("CPU_HASH_CHALLENGE")
-GPU_HASH_CHALLENGE = os.environ.get("GPU_HASH_CHALLENGE")
+hash_challenge = os.environ.get("HASH_CHALLENGE")
 
 # Variables globales para mantener las conexiones
-global rabbitmq
 rabbitmq = rabbit_connect()
 redis = redis_connect()
 
@@ -52,7 +47,7 @@ def build_block(transactions):
                 'index': last_index,
                 'previous_hash': previous_hash,
                 'data': transactions,
-                "timestamp": f"{round(time.time())}",
+                "timestamp": f"{round(datetime.now().timestamp())}",
                 # Este valor lo calculan los mineros
                 'nonce': 0,
                 # Este valor lo completarán los mineros una vez calcularon el nonce: md5(nonce + (index+timestamp+data+previous_hash))
@@ -65,16 +60,10 @@ def build_block(transactions):
             properties = pika.BasicProperties(
                 delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
 
-            # TODO: Consultar estado del pool de mineros y asignar el challenge dependiendo del estado actual.
-            # ? Si GPU_COUNT > 0 => challenge GPU_HASH_CHALLENGE
-            # ? Si GPU_COUNT = 0 => challenge CPU_HASH_CHALLENGE
-            # * Por el momento, la GPU está inhabilitada en los mineros, por lo cuál asigno directamente CPU_HASH_CHALLENGE
-            challenge = CPU_HASH_CHALLENGE
-
             rabbitmq.basic_publish(
-                exchange='blockchain', routing_key='b',
+                exchange='blockchain', routing_key='bl',
                 properties=properties,
-                body=json.dumps({"challenge": str(challenge), "block": new_block.to_dict()}))
+                body=json.dumps({"challenge": str(hash_challenge), "block": new_block.to_dict()}))
 
             print(
                 f"{datetime.now()}: Block {new_block.index} [{new_block.previous_hash}] created ...")
@@ -128,11 +117,11 @@ def registerTransaction():
         sender = transaction["sender"]
         receiver = transaction["receiver"]
         amount = transaction["amount"]
-        timestamp = f"{datetime.now()}"
-        transaction_id = f"tx:{timestamp}:{sender}"
+        timestamp = f"{round(datetime.now().timestamp())}"
+        transaction_id = f"transactions:{timestamp}:{sender}"
 
         new_transaction = Transaction(
-            transaction_id, sender, receiver, amount, timestamp)
+            f"{timestamp}:{sender}", sender, receiver, amount, timestamp)
 
         # Publico la transacción en la cola de rabbit.
         properties = pika.BasicProperties(
@@ -143,7 +132,7 @@ def registerTransaction():
             body=json.dumps(new_transaction.to_dict()))
 
         # Almacenar la transacción en redis.
-        redis.hset(new_transaction.id,
+        redis.hset(transaction_id,
                    mapping=new_transaction.to_dict())
 
         return jsonify({
@@ -195,7 +184,7 @@ def validateBlock():
             })
 
         # Verifica si el bloque ya existe en redis
-        block_id = f"block:{new_block.previous_hash}"
+        block_id = f"blockchain:{new_block.previous_hash}"
         block_exists = redis.hexists(block_id, "hash")
         if block_exists:
             # Si ya existe descarto está request, porque ya un minero completo la tarea antes
@@ -205,7 +194,8 @@ def validateBlock():
             })
 
         # Guardo el hash del nuevo bloque en el sorted set
-        redis.zadd('block_hashes', {new_block.hash: time.time()})
+        redis.zadd('block_hashes', {
+                   new_block.hash: datetime.now().timestamp()})
         # Guardo el bloque en la blockchain, asociandoló con el bloque anterior
         redis.hset(block_id, mapping=new_block.to_dict())
 

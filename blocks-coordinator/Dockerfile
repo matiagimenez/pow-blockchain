@@ -21,9 +21,9 @@ RUN chown -R nonroot:nonroot /app
 USER nonroot
 
 # Instalar las dependencias de Python
-RUN pip install --upgrade pip setuptools && \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 EXPOSE 5000
 
+# CMD ["python", "-m", "flask", "--app", "server", "run", "--host", "0.0.0.0", "--debug"]
 CMD ["python", "-m", "flask", "--app", "server", "run", "--host", "0.0.0.0"]
