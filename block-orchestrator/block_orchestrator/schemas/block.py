@@ -3,7 +3,7 @@ from hashlib import md5
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
-from src.utils import Settings
+from block_orchestrator.utils import Settings
 
 
 class Transaction(BaseModel):

@@ -4,7 +4,7 @@ from typing import Optional
 
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError
-from src.utils import Settings
+from block_orchestrator.utils import Settings
 
 class RedisClient:
     def __init__(self):

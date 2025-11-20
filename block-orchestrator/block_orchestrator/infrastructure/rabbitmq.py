@@ -4,7 +4,7 @@ import asyncio
 
 from aio_pika import ExchangeType, connect_robust
 from aio_pika.abc import AbstractChannel
-from src.utils import Settings, logger
+from block_orchestrator.utils import Settings, logger
 
 
 class RabbitMQClient:

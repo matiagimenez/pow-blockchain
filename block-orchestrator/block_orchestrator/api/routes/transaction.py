@@ -1,8 +1,8 @@
 from aio_pika import Message
 from fastapi import APIRouter, status
-from src.infrastructure import RabbitMQClient
-from src.schemas import Transaction
-from src.utils import Settings, logger
+from block_orchestrator.infrastructure import RabbitMQClient
+from block_orchestrator.schemas import Transaction
+from block_orchestrator.utils import Settings, logger
 
 transaction_router = APIRouter(tags=["Transactions"], prefix="/transaction")
 
