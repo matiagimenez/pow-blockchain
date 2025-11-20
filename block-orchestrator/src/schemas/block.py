@@ -1,8 +1,10 @@
-from uuid import UUID, uuid4
+from datetime import datetime
 from hashlib import md5
+from uuid import UUID, uuid4
+
 from pydantic import BaseModel, Field
 from src.utils import Settings
-from datetime import datetime
+
 
 class Transaction(BaseModel):
     id_: UUID = Field(alias="id", default_factory=uuid4)

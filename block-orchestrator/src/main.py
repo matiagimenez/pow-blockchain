@@ -1,5 +1,5 @@
-from src.api.app import app
 import uvicorn
+
 
 def main() -> None:
     uvicorn.run("src.api.app:app", reload=True, host="0.0.0.0", port=8000)

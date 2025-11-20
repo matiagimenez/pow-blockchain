@@ -1,5 +1,0 @@
-flask
-pika
-python-dotenv
-redis
-APScheduler

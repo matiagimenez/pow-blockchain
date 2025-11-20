@@ -1,8 +1,7 @@
 from aio_pika import Message
-from fastapi import APIRouter
-from src.schemas import Transaction
+from fastapi import APIRouter, status
 from src.infrastructure import RabbitMQClient
-from fastapi import status
+from src.schemas import Transaction
 from src.utils import Settings
 
 transaction_router = APIRouter(tags=["Transactions"], prefix="/transaction")
@@ -19,5 +18,5 @@ async def register_transaction(transaction: Transaction) -> Transaction:
         # Almacenar la transacción en redis.
         # redis.hset(transaction_id, mapping=transaction.model_dump(by_alias=True))
             return transaction
-        except Exception as e:
+        except Exception:
             raise ValueError("Failed to register transaction")

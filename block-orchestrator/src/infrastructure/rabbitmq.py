@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import asyncio
-from aio_pika import connect_robust, ExchangeType
-from aio_pika.abc import AbstractChannel
 
+from aio_pika import ExchangeType, connect_robust
+from aio_pika.abc import AbstractChannel
 from src.utils import Settings
 
 
 class RabbitMQClient:
     def __init__(self):
-        self.max_retries = Settings.RABBITMQ_MAX_RETRIES
-        self.retry_delay = Settings.RABBITMQ_RETRY_DELAY
+        self.max_retries = Settings.CONNECTION_MAX_RETRIES
+        self.retry_delay = Settings.CONNECTION_RETRY_DELAY
         self._connection = None
         self._channel = None
 
