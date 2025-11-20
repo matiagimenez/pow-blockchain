@@ -1,0 +1,20 @@
+services:
+  redis:
+    container_name: redis
+    image: redis:bookworm
+    restart: always
+    ports:
+      - '6379:6379'
+      - '8001:8001'
+
+  rabbitmq:
+    container_name: rabbit
+    image: rabbitmq:4.2.1-management
+    restart: always
+    hostname: 'rabbit'
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=password
