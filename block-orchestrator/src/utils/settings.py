@@ -6,7 +6,7 @@ class BasicSettings(BaseSettings):
     
     HASH_CHALLENGE: str = "0000"
     
-    RABBITMQ_HOST: str = "rabbit"
+    RABBITMQ_HOST: str = "localhost"
     RABBITMQ_USER: str = "admin"
     RABBITMQ_PASSWORD: str = "password"
     RABBITMQ_EXCHANGE: str = "blockchain"

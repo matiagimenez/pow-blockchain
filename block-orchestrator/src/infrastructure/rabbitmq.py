@@ -4,7 +4,7 @@ import asyncio
 
 from aio_pika import ExchangeType, connect_robust
 from aio_pika.abc import AbstractChannel
-from src.utils import Settings
+from src.utils import Settings, logger
 
 
 class RabbitMQClient:
@@ -24,28 +24,33 @@ class RabbitMQClient:
     async def connect(self) -> AbstractChannel:
         for attempt in range(1, self.max_retries + 1):
             try:
+                logger.info("Attempting to connect to RabbitMQ...")
                 self._connection = await connect_robust(
                     host=Settings.RABBITMQ_HOST,
                     login=Settings.RABBITMQ_USER,
                     password=Settings.RABBITMQ_PASSWORD,
                     heartbeat=3600,
                 )
-
                 self._channel = await self._connection.channel()
                 await self._setup_exchanges_and_queues()
+
+                logger.info("Connected to RabbitMQ successfully")
                 return self._channel
 
             except Exception:
                 if attempt == self.max_retries:
                     raise
+                logger.warning(f"Failed to connect to RabbitMQ. Retrying in {self.retry_delay} seconds...")
                 await asyncio.sleep(self.retry_delay)
 
         raise RuntimeError("Failed to connect to RabbitMQ after retries")
 
     async def close(self):
         if self._channel and not self._channel.is_closed:
+            logger.info("Closing RabbitMQ channel")
             await self._channel.close()
         if self._connection and not self._connection.is_closed:
+            logger.info("Closing RabbitMQ connection")
             await self._connection.close()
 
     async def _setup_exchanges_and_queues(self):
