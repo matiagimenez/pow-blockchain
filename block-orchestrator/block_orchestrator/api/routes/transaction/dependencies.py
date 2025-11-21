@@ -1,7 +1,9 @@
-from block_orchestrator.services import TransactionService
-from block_orchestrator.infrastructure import RabbitMQClient, RedisClient
 from typing import Annotated
+
+from block_orchestrator.infrastructure import RabbitMQClient, RedisClient
+from block_orchestrator.services import TransactionService
 from fastapi import Depends
+
 
 def inject_transaction_service() -> TransactionService:
     return TransactionService(

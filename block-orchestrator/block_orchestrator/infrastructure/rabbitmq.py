@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from aio_pika import ExchangeType, connect_robust, Message
+from aio_pika import ExchangeType, connect_robust
 from aio_pika.abc import AbstractChannel
 from block_orchestrator.utils import Settings, logger
 

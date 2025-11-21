@@ -1,3 +1,3 @@
-from .transaction import transaction_router, InjectedTransactionService
+from .transaction import InjectedTransactionService, transactions_router
 
-__all__ = ["transaction_router", "InjectedTransactionService"]
+__all__ = ["transactions_router", "InjectedTransactionService"]

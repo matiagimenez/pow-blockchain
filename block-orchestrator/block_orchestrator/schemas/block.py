@@ -2,8 +2,8 @@ from datetime import datetime
 from hashlib import md5
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
 from block_orchestrator.utils import Settings
+from pydantic import BaseModel, Field
 
 
 class Transaction(BaseModel):

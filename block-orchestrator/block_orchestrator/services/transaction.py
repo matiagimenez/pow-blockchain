@@ -1,9 +1,10 @@
-from block_orchestrator.utils import Settings
-from block_orchestrator.infrastructure import RedisClient, RabbitMQClient
-from block_orchestrator.schemas import Transaction
-from aio_pika import Message
-from block_orchestrator.utils import logger
 from dataclasses import dataclass
+
+from aio_pika import Message
+from block_orchestrator.infrastructure import RabbitMQClient, RedisClient
+from block_orchestrator.schemas import Transaction
+from block_orchestrator.utils import Settings, logger
+
 
 @dataclass
 class TransactionService:

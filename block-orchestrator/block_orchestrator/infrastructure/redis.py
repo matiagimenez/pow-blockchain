@@ -1,10 +1,10 @@
 import asyncio
-import os
 from typing import Optional
 
+from block_orchestrator.utils import Settings
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError
-from block_orchestrator.utils import Settings
+
 
 class RedisClient:
     def __init__(self):

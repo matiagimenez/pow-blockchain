@@ -1,12 +1,13 @@
-from fastapi import APIRouter,status, BackgroundTasks
 from block_orchestrator.schemas import Transaction
 from block_orchestrator.utils import logger
+from fastapi import APIRouter, BackgroundTasks, status
+
 from .dependencies import InjectedTransactionService
 
-transaction_router = APIRouter(tags=["Transactions"], prefix="/transaction")
+transactions_router = APIRouter(tags=["Transactions"], prefix="/transaction")
 
 
-@transaction_router.post("/", status_code=status.HTTP_202_ACCEPTED)
+@transactions_router.post("/", status_code=status.HTTP_202_ACCEPTED)
 async def register_transaction(
     transaction: Transaction,
     background_tasks: BackgroundTasks,
