@@ -11,7 +11,7 @@ transactions_router = APIRouter(tags=["Transactions"], prefix="/transaction")
 async def register_transaction(
     transaction: Transaction,
     background_tasks: BackgroundTasks,
-    service: InjectedTransactionService
+    service: InjectedTransactionService,
 ) -> Transaction:
     logger.info(f"Registering transaction {transaction.model_dump_json(indent=4)}")
     background_tasks.add_task(service.publish_transaction, transaction)

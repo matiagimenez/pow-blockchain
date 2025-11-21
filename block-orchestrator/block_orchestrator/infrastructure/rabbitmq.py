@@ -41,11 +41,12 @@ class RabbitMQClient:
             except Exception:
                 if attempt == self.max_retries:
                     raise
-                logger.warning(f"Failed to connect to RabbitMQ. Retrying in {self.retry_delay} seconds...")
+                logger.warning(
+                    f"Failed to connect to RabbitMQ. Retrying in {self.retry_delay} seconds..."
+                )
                 await asyncio.sleep(self.retry_delay)
 
         raise RuntimeError("Failed to connect to RabbitMQ after retries")
-
 
     async def close(self):
         if self._channel and not self._channel.is_closed:

@@ -1,11 +1,11 @@
 import sys
 
-from loguru import logger
+from loguru import logger as logger_
 
 
 def configure_logger():
-    logger.remove()
-    logger.add(
+    logger_.remove()
+    logger_.add(
         sys.stdout,
         level="DEBUG",
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
@@ -14,7 +14,7 @@ def configure_logger():
         backtrace=True,
         diagnose=True,
     )
-    return logger
+    return logger_
 
 
 logger = configure_logger()

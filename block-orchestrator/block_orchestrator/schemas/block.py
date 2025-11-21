@@ -17,8 +17,6 @@ class Transaction(BaseModel):
     def content(self) -> str:
         return "".join(self.model_dump_json(by_alias=True))
 
-    
-
 
 class Block(BaseModel):
     timestamp: str
@@ -37,6 +35,7 @@ class Block(BaseModel):
         return f"{self.index}{self.timestamp}{self.payload}{self.previous_hash}"
 
     # Calculates and validates the block hash - md5(nonce + md5(index+timestamp+data+previous_hash))
+    @property
     def is_valid(self) -> bool:
         hash_challenge = Settings.HASH_CHALLENGE
         if hash_challenge and (not self.hash_.startswith(hash_challenge)):

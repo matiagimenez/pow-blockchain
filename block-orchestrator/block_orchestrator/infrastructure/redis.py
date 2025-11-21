@@ -35,7 +35,9 @@ class RedisClient:
             except ConnectionError:
                 if attempt == self.max_retries:
                     raise
-                print(f"Failed to connect to Redis. Retrying in {self.retry_delay} seconds...")
+                print(
+                    f"Failed to connect to Redis. Retrying in {self.retry_delay} seconds..."
+                )
                 await asyncio.sleep(self.retry_delay)
         raise RuntimeError("Redis connection failed after retries.")
 
