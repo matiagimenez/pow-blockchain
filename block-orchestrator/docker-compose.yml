@@ -23,6 +23,7 @@ services:
 
   block_orchestrator:
     build: .
+    image: block_orchestrator:latest
     container_name: block_orchestrator
     depends_on:
       - redis
