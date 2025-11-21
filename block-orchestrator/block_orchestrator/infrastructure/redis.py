@@ -10,7 +10,6 @@ class RedisClient:
     def __init__(self):
         self.host = Settings.REDIS_HOST
         self.port = Settings.REDIS_PORT
-        self.password = Settings.REDIS_PASSWORD
         self.max_retries = Settings.CONNECTION_MAX_RETRIES
         self.retry_delay = Settings.CONNECTION_RETRY_DELAY
 
@@ -29,11 +28,8 @@ class RedisClient:
                 self._client = Redis(
                     host=self.host,
                     port=self.port,
-                    password=self.password,
                     decode_responses=True,
                 )
-
-                self._client.ping()
                 return self._client
 
             except ConnectionError:
