@@ -14,7 +14,7 @@ async def submit_block(block: Block, service: InjectedBlockService) -> Block:
             detail=f"Block {block.hash_} validation failed",
         )
 
-    block_already_exists = service.verify_block_existance(block)
+    block_already_exists = await service.verify_block_existance(block)
     if block_already_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
