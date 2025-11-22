@@ -1,7 +1,7 @@
 from typing import Awaitable, Callable
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from block_orchestrator.utils import logger
+from block_orchestrator.utils.logger import logger
 
 
 class Scheduler_:

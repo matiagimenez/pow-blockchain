@@ -9,7 +9,7 @@ from .routes import base_router, blocks_router, transactions_router
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan():
     Scheduler.add_cronjob(
         job=process_transactions_and_build_block,
         interval=Settings.BLOCK_CREATION_INTERVAL,
@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan)  # type: ignore[arg-type]
 
 app.include_router(base_router)
 app.include_router(transactions_router)

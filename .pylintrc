@@ -1,0 +1,9 @@
+[MESSAGES CONTROL]
+# Disable specific warnings
+disable=
+    missing-docstring,
+    missing-module-docstring,
+    missing-function-docstring,
+    missing-class-docstring,
+    too-few-public-methods,
+    invalid-name

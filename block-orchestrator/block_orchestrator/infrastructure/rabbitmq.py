@@ -8,7 +8,8 @@ from block_orchestrator.utils import Settings, logger
 
 
 class RabbitMQClient:
-    def __init__(self):
+    def __init__(self) -> None:
+
         self.max_retries = Settings.CONNECTION_MAX_RETRIES
         self.retry_delay = Settings.CONNECTION_RETRY_DELAY
         self._connection = None
@@ -32,7 +33,7 @@ class RabbitMQClient:
                     password=Settings.RABBITMQ_PASSWORD,
                     heartbeat=3600,
                 )
-                self._channel = await self._connection.channel()
+                self._channel = await self._connection.channel()  # type: ignore[attr-defined]
                 await self._setup_exchanges_and_queues()
 
                 logger.info("Connected to RabbitMQ successfully")

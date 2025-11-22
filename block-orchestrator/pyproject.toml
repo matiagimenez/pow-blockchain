@@ -35,7 +35,12 @@ disable = [
   "missing-docstring",
   "missing-module-docstring",
   "missing-function-docstring",
+  "missing-class-docstring",
+  "too-few-public-methods",
 ]
+
+[tool.pylint.main]
+jobs = 0
 
 [tool.poe.tasks]
 dev = "uvicorn block_orchestrator.api.app:app --reload --host 0.0.0.0 --port 8000"

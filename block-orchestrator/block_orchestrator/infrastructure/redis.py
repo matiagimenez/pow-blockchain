@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from block_orchestrator.utils import Settings
 from redis.asyncio import Redis
@@ -13,7 +12,7 @@ class RedisClient:
         self.max_retries = Settings.CONNECTION_MAX_RETRIES
         self.retry_delay = Settings.CONNECTION_RETRY_DELAY
 
-        self._client: Optional[Redis] = None
+        self._client: Redis | None = None
 
     async def __aenter__(self) -> Redis:
         await self.connect()

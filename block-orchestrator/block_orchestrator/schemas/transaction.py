@@ -15,7 +15,7 @@ class Transaction(BaseModel):
     timestamp: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
 
     @field_validator("sender", "receiver")
-    def validate_wallet_address(cls, address: str) -> str:
+    def validate_wallet_address(self, address: str) -> str:
         if not ADDRESS_REGEX.match(address):
             raise ValueError(f"Invalid wallet address format: {address}")
         return address
