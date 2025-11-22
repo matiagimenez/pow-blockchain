@@ -67,6 +67,11 @@ class RabbitMQClient:
             auto_delete=False,
         )
 
-        for name, routing_key in Settings.RABBITMQ_QUEUES.items():
-            queue = await self._channel.declare_queue(name=name, durable=True)
+        queues = {
+            Settings.RABBITMQ_TRANSACTIONS_QUEUE: Settings.RABBITMQ_TRANSACTIONS_ROUTING_KEY,
+            Settings.RABBITMQ_TASKS_QUEUE: Settings.RABBITMQ_TASKS_ROUTING_KEY,
+        }
+
+        for queue_name, routing_key in queues.items():
+            queue = await self._channel.declare_queue(name=queue_name, durable=True)
             await queue.bind(exchange, routing_key)

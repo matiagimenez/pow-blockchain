@@ -24,5 +24,5 @@ pre-commit run --files $(git ls-files ".")
 Run the HTTP Server
 
 ```sh
-uvicorn block_orchestrator.main:main --host 0.0.0.0 --port 5000
+uvicorn block_orchestrator.main:main --host 0.0.0.0 --port 8000
 ```

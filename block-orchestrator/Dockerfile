@@ -16,4 +16,4 @@ RUN uv sync --frozen
 
 EXPOSE 5000
 
-CMD ["uv", "run", "uvicorn", "block_orchestrator.main:main", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uv", "run", "uvicorn", "block_orchestrator.main:main", "--host", "0.0.0.0", "--port", "8000"]
