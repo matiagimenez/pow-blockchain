@@ -1,12 +1,10 @@
 from typing import Awaitable, Callable
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
 from block_orchestrator.utils import logger
 
 
 class Scheduler_:
-
     def __init__(self):
         self.scheduler = AsyncIOScheduler()
 
