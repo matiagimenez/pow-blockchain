@@ -18,7 +18,7 @@ Key Features
 Run pre-commit over the `block_orchestrator` files
 
 ```sh
-pre-commit run --files $(git ls-files "block_orchestrator/*")
+pre-commit run --files $(git ls-files ".")
 ```
 
 Run the HTTP Server
