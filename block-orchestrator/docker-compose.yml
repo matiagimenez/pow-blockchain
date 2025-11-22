@@ -1,0 +1,44 @@
+services:
+  redis:
+    container_name: redis
+    image: redis:8.4.0-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: ['redis-server', '--appendonly', 'yes']
+    restart: always
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4.2.1-management
+    restart: always
+    hostname: 'rabbit'
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    environment:
+      RABBITMQ_DEFAULT_USER: 'admin'
+      RABBITMQ_DEFAULT_PASS: 'password'
+
+  block_orchestrator:
+    build: .
+    image: block_orchestrator:latest
+    container_name: block_orchestrator
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: 'admin'
+      RABBITMQ_PASSWORD: 'password'
+      RABBITMQ_EXCHANGE: 'blockchain'
+      HASH_CHALLENGE: '0000'
+    ports:
+      - '8000:8000'
+
+volumes:
+  redis_data:
