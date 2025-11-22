@@ -1,79 +1,85 @@
 services:
-    redis:
-        container_name: redis
-        image: redis/redis-stack:7.2.0-v10 # redis:alpine3.19
-        restart: always
-        ports:
-            - '6379:6379'
-            - '8001:8001'
-        volumes:
-            - redis:/data
-        networks:
-            - blockchain-network
+  redis:
+    container_name: redis
+    image: redis:8.4.0-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis:/data
+    command: ['redis-server', '--appendonly', 'yes']
+    restart: always
+    networks:
+      - blockchain-network
 
-    rabbitmq:
-        container_name: rabbit
-        image: rabbitmq:3.13-management
-        restart: always
-        hostname: 'rabbit'
-        volumes:
-            - rabbitmq:/var/lib/rabbitmq
-        ports:
-            - '15672:15672'
-            - '5672:5672'
-        environment:
-            - RABBITMQ_DEFAULT_USER=admin
-            - RABBITMQ_DEFAULT_PASS=password
-        networks:
-            - blockchain-network
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4.2.1-management
+    restart: always
+    hostname: 'rabbit'
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    environment:
+      RABBITMQ_DEFAULT_USER: 'admin'
+      RABBITMQ_DEFAULT_PASS: 'password'
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    networks:
+      - blockchain-network
 
-    blocks-coordinator:
-        depends_on:
-            - rabbitmq
-            - redis
-        container_name: blocks-coordinator
-        image: blocks-coordinator:latest
-        ports:
-            - '5001:5000'
-        environment:
-            - RABBITMQ_HOST=rabbit
-            - RABBITMQ_USER=admin
-            - RABBITMQ_PASSWORD=password
-            - REDIS_HOST=redis
-            - REDIS_PORT=6379
-            - REDIS_PASSWORD=
-            - HASH_CHALLENGE=000
-        networks:
-            - blockchain-network
+  block_orchestrator:
+    build: ./block-orchestrator
+    container_name: block_orchestrator
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: 'admin'
+      RABBITMQ_PASSWORD: 'password'
+      RABBITMQ_EXCHANGE: 'blockchain'
+      HASH_CHALLENGE: '0000'
+      RABBITMQ_TRANSACTIONS_QUEUE: 'transactions'
+      RABBITMQ_TRANSACTIONS_ROUTING_KEY: 'tx'
+      RABBITMQ_TASKS_QUEUE: 'tasks'
+      RABBITMQ_TASKS_ROUTING_KEY: 't'
+      BLOCK_CREATION_INTERVAL: 60
+    ports:
+      - '8000:8000'
+    networks:
+      - blockchain-network
 
-    pool-manager:
-        depends_on:
-            - rabbitmq
-            - redis
-        container_name: pool-manager
-        image: pool-manager:latest
-        ports:
-            - '5002:5000'
-        environment:
-            - RABBITMQ_HOST=rabbit
-            - RABBITMQ_USER=admin
-            - RABBITMQ_PASSWORD=password
-            - REDIS_HOST=redis
-            - REDIS_PORT=6379
-            - REDIS_PASSWORD=
-            - CPU_HASH_CHALLENGE=0000
-            - GPU_HASH_CHALLENGE=000000
-            - KEEP_ALIVE_INTERVAL=25
-            - MAX_RANGE=100000
-            - CPU_MINERS_COUNT=5
-            - EXPIRATION_TIME=15
-            - CREDENTIALS_PATH=/credentials/credentials.json
-        networks:
-            - blockchain-network
-        volumes:
-            - ./pool-manager/credentials.json:/credentials/credentials.json
+#   pool-manager:
+#     depends_on:
+#       - rabbitmq
+#       - redis
+#     container_name: pool-manager
+#     image: pool-manager:latest
+#     ports:
+#       - '5002:5000'
+#     environment:
+#       - RABBITMQ_HOST=rabbit
+#       - RABBITMQ_USER=admin
+#       - RABBITMQ_PASSWORD=password
+#       - REDIS_HOST=redis
+#       - REDIS_PORT=6379
+#       - REDIS_PASSWORD=
+#       - CPU_HASH_CHALLENGE=0000
+#       - GPU_HASH_CHALLENGE=000000
+#       - KEEP_ALIVE_INTERVAL=25
+#       - MAX_RANGE=100000
+#       - CPU_MINERS_COUNT=5
+#       - EXPIRATION_TIME=15
+#       - CREDENTIALS_PATH=/credentials/credentials.json
+#     networks:
+#       - blockchain-network
+#     volumes:
+#       - ./pool-manager/credentials.json:/credentials/credentials.json
 networks:
-    blockchain-network:
+  blockchain-network:
 volumes:
-    redis:
-    rabbitmq:
+  redis:
+  rabbitmq:
