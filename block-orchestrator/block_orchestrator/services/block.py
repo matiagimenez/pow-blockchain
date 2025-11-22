@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from block_orchestrator.infrastructure import RedisClient
-from block_orchestrator.schemas import Block
+from block_orchestrator.schemas import Block, Transactions
 from block_orchestrator.utils import logger
 
 
@@ -13,8 +13,8 @@ class BlockService:
                 f"{block.model_dump_json(indent=4, exclude={'transactions'})}"
             )
             async with RedisClient() as redis:
-                previous_block_id = f"blockchain:{block.previous_hash}"
-                return await redis.hexists(previous_block_id, "hash")
+                previous_block_key = f"b-{block.previous_hash}"
+                return await redis.hexists(previous_block_key, "hash")
         except Exception as e:
             logger.error(f"Failed to verify block {block.hash_} existance: {e}")
             raise
@@ -25,13 +25,16 @@ class BlockService:
                 f"Adding block to chain "
                 f"{block.model_dump_json(indent=4, exclude={'transactions'})}"
             )
-            block_key = f"blockchain:{block.previous_hash}"
-            timestamp = datetime.now().timestamp()
+
+            block_key = f"b-{block.previous_hash}"
+            timestamp = int(datetime.now().timestamp())
             async with RedisClient() as redis:
-                await redis.zadd("block_hashes", {block.hash_: timestamp})
-                await redis.hset(
-                    block_key, mapping=block.model_dump(by_alias=True, mode="json")
+                await redis.zadd("hashes", {block.hash_: timestamp})
+                block_data = block.model_dump(
+                    by_alias=True, mode="json", exclude={"transactions"}
                 )
+                block_data["transactions"] = Transactions.dump_json(block.transactions)
+                await redis.hset(block_key, mapping=block_data)
         except Exception as e:
             logger.error(f"Failed to add block to chain {block.hash_}: {e}")
             raise

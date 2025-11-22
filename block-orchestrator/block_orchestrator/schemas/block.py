@@ -1,21 +1,9 @@
-from datetime import datetime
 from hashlib import md5
-from uuid import UUID, uuid4
 
 from block_orchestrator.utils import Settings
 from pydantic import BaseModel, Field
 
-
-class Transaction(BaseModel):
-    id_: UUID = Field(alias="id", default_factory=uuid4)
-    sender: str
-    receiver: str
-    amount: float
-    timestamp: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
-
-    @property
-    def content(self) -> str:
-        return "".join(self.model_dump_json(by_alias=True))
+from .transaction import Transaction
 
 
 class Block(BaseModel):

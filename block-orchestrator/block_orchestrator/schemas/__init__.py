@@ -1,3 +1,4 @@
-from .block import Block, Transaction
+from .block import Block
+from .transaction import Transaction, Transactions
 
-__all__ = ["Block", "Transaction"]
+__all__ = ["Block", "Transaction", "Transactions"]
