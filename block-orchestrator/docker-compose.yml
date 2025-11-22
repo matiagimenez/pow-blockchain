@@ -37,6 +37,11 @@ services:
       RABBITMQ_PASSWORD: 'password'
       RABBITMQ_EXCHANGE: 'blockchain'
       HASH_CHALLENGE: '0000'
+      RABBITMQ_TRANSACTIONS_QUEUE: 'transactions'
+      RABBITMQ_TRANSACTIONS_ROUTING_KEY: 'tx'
+      RABBITMQ_TASKS_QUEUE: 'tasks'
+      RABBITMQ_TASKS_ROUTING_KEY: 't'
+      BLOCK_CREATION_INTERVAL: 60
     ports:
       - '8000:8000'
 
