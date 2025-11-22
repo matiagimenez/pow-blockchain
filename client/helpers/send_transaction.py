@@ -21,6 +21,8 @@ def send_transaction() -> None:
     try:
         response = requests.post(url, json=data, timeout=10)
         response.raise_for_status()
-        logger.info(f"Transaction sent successfully to {url}. Status: {response.status_code}")
+        logger.info(
+            f"Transaction sent successfully to {url}. Status: {response.status_code}"
+        )
     except requests.exceptions.RequestException as e:
         logger.error(f"Error sending transaction: {e}")
