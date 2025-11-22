@@ -2,14 +2,14 @@ import random
 from typing import Any
 
 import requests
-from helpers import generate_md5_hash
+from helpers import generate_wallet_address
 from utils import Settings, logger
 
 
 def create_transaction_data() -> dict[str, Any]:
     return {
-        "sender": generate_md5_hash(),
-        "receiver": generate_md5_hash(),
+        "sender": generate_wallet_address(),
+        "receiver": generate_wallet_address(),
         "amount": random.randint(1, 10000),
     }
 
