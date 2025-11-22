@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 from block_orchestrator.utils import Settings
 from redis.asyncio import Redis
@@ -6,7 +7,7 @@ from redis.exceptions import ConnectionError
 
 
 class RedisClient:
-    def __init__(self):
+    def __init__(self) -> None:
         self.host = Settings.REDIS_HOST
         self.port = Settings.REDIS_PORT
         self.max_retries = Settings.CONNECTION_MAX_RETRIES
