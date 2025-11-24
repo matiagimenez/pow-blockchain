@@ -1,5 +1,4 @@
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster
-# Configuración del cluster de Kubernetes
 resource "google_container_cluster" "primary" {
   name                     = "primary"
   location                 = var.zone
@@ -22,7 +21,7 @@ resource "google_container_cluster" "primary" {
   }
 
   release_channel {
-    channel = "RAPID" # "REGULAR" / "STABLE"
+    channel = "RAPID"
   }
 
   workload_identity_config {

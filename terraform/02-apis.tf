@@ -1,5 +1,4 @@
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_service
-# Habilita servicios de GCP
 
 resource "google_project_service" "compute" {
   service = "compute.googleapis.com"
