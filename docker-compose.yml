@@ -52,6 +52,27 @@ services:
     networks:
       - blockchain-network
 
+  pow_miner:
+    build: ./pow-miner
+    container_name: pow_miner
+    depends_on:
+      - redis
+      - rabbitmq
+      - block_orchestrator
+    environment:
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: 'admin'
+      RABBITMQ_PASSWORD: 'password'
+      RABBITMQ_EXCHANGE: 'blockchain'
+      RABBITMQ_TASKS_QUEUE: 'tasks'
+      RABBITMQ_TASKS_ROUTING_KEY: 't'
+      BLOCK_ORCHESTRATOR_URL: 'http://block_orchestrator:8000'
+    ports:
+      - '5000:5000'
+    networks:
+      - blockchain-network
+
 #   pool-manager:
 #     depends_on:
 #       - rabbitmq

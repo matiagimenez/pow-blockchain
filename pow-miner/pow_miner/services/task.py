@@ -82,10 +82,13 @@ class TaskService:
                 }
             )
             logger.info(f"Sending block to orchestrator: {block}")
-            requests.post(
+            response = requests.post(
                 f"{Settings.BLOCK_ORCHESTRATOR_URL}/block/validate",
                 block.model_dump_json(by_alias=True),
             )
+            if response.status_code != 200:
+                logger.error(f"Error validating block: {response.text}")
+                return
 
         except Exception as e:
             logger.error(f"Error mining task: {e}")
