@@ -14,6 +14,6 @@ USER nonroot
 
 RUN uv sync --frozen
 
-EXPOSE 5000
+EXPOSE 8000
 
 CMD ["uv", "run", "uvicorn", "block_orchestrator.main:main", "--host", "0.0.0.0", "--port", "8000"]
