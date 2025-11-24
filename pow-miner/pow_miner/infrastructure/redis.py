@@ -1,9 +1,9 @@
 import asyncio
-from typing import Optional
 
-from block_orchestrator.utils import Settings
 from redis.asyncio import Redis
 from redis.exceptions import ConnectionError
+
+from pow_miner.utils import Settings
 
 
 class RedisClient:

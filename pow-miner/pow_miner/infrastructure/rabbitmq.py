@@ -4,12 +4,12 @@ import asyncio
 
 from aio_pika import ExchangeType, connect_robust
 from aio_pika.abc import AbstractChannel
-from block_orchestrator.utils import Settings, logger
+
+from pow_miner.utils import Settings, logger
 
 
 class RabbitMQClient:
     def __init__(self) -> None:
-
         self.max_retries = Settings.CONNECTION_MAX_RETRIES
         self.retry_delay = Settings.CONNECTION_RETRY_DELAY
         self._connection = None
