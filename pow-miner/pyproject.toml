@@ -40,4 +40,4 @@ disable = [
 jobs = 0
 
 [tool.poe.tasks]
-dev = "uvicorn pow_miner.main:main --reload --host 0.0.0.0 --port 8000"
+dev = "uvicorn pow_miner.api.app:app --reload --host 0.0.0.0 --port 5000"

@@ -1,5 +1,10 @@
-from .background_task import process_transactions_and_build_block
-from .check_gpu import check_for_nvidia_smi
+from .background_task import send_keep_alive
+from .check_gpu import gpu_context, initialize_gpu_context
 from .cpu import find_nonce
 
-__all__ = ["process_transactions_and_build_block", "find_nonce", "check_for_nvidia_smi"]
+__all__ = [
+    "send_keep_alive",
+    "find_nonce",
+    "gpu_context",
+    "initialize_gpu_context",
+]

@@ -1,23 +1,29 @@
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
-from pow_miner.utils import Scheduler, Settings
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+
+from pow_miner.helpers import initialize_gpu_context, send_keep_alive
+from pow_miner.services.task import TaskService
+from pow_miner.utils import Scheduler, Settings
 
 from .routes import base_router
 
 
 @asynccontextmanager
-async def lifespan():
-    # Scheduler.add_cronjob(
-    #     job=process_transactions_and_build_block,
-    #     interval=Settings.BLOCK_CREATION_INTERVAL,
-    # )
-    # Scheduler.start()
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    initialize_gpu_context()
+    Scheduler.add_cronjob(
+        job=send_keep_alive,
+        interval=Settings.KEEP_ALIVE_INTERVAL,
+    )
+    Scheduler.start()
+    await TaskService().consume_tasks()
     yield
 
 
-app = FastAPI(lifespan=lifespan)  # type: ignore[arg-type]
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(base_router)
 

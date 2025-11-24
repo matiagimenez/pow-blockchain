@@ -11,18 +11,15 @@ class BasicSettings(BaseSettings):
     RABBITMQ_USER: str = "admin"
     RABBITMQ_PASSWORD: str = "password"
     RABBITMQ_EXCHANGE: str = "blockchain"
-    RABBITMQ_TRANSACTIONS_QUEUE: str = "transactions"
-    RABBITMQ_TRANSACTIONS_ROUTING_KEY: str = "tx"
     RABBITMQ_TASKS_QUEUE: str = "tasks"
     RABBITMQ_TASKS_ROUTING_KEY: str = "t"
-
-    REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
 
     CONNECTION_MAX_RETRIES: int = 10
     CONNECTION_RETRY_DELAY: int = 5
 
-    BLOCK_CREATION_INTERVAL: int = 60
+    BLOCK_ORCHESTRATOR_URL: str = "http://localhost:8000"
+    POOL_MANAGER_URL: str = "http://localhost:5002"
+    KEEP_ALIVE_INTERVAL: int = 5
 
 
 Settings = BasicSettings()
