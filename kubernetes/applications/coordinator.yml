@@ -1,71 +1,70 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: coordinator
-    namespace: applications-namespace
+  name: coordinator
+  namespace: applications-namespace
 spec:
-    replicas: 1
-    selector:
-        matchLabels:
-            app: coordinator
-    template:
-        metadata:
-            labels:
-                app: coordinator
-        spec:
-            containers:
-                - name: coordinator
-                  image: 'simondileogit/blockchain-coordinator:latest'
-                  ports:
-                      - containerPort: 5000
-                  env:
-                      - name: REDIS_HOST
-                        valueFrom:
-                            configMapKeyRef:
-                                name: redis-config
-                                key: REDIS_HOST
-                      - name: REDIS_PORT
-                        valueFrom:
-                            configMapKeyRef:
-                                name: redis-config
-                                key: REDIS_PORT
-                      - name: REDIS_PASSWORD
-                        valueFrom:
-                            configMapKeyRef:
-                                name: redis-config
-                                key: REDIS_PASSWORD
-                      - name: RABBITMQ_HOST
-                        valueFrom:
-                            configMapKeyRef:
-                                name: rabbit-config
-                                key: RABBITMQ_HOST
-                      - name: RABBITMQ_USER
-                        valueFrom:
-                            configMapKeyRef:
-                                name: rabbit-config
-                                key: RABBITMQ_USER
-                      - name: RABBITMQ_PASSWORD
-                        valueFrom:
-                            configMapKeyRef:
-                                name: rabbit-config
-                                key: RABBITMQ_PASSWORD
-                      - name: HASH_CHALLENGE
-                        valueFrom:
-                            configMapKeyRef:
-                                name: application-config
-                                key: HASH_CHALLENGE
-            # Agrega toleration para asegurar que los pods se creen unicamente en el node group de aplicaciones
-            tolerations:
-                - key: instance_type
-                  operator: Equal
-                  value: applications
-                  effect: NoSchedule
-            affinity:
-                nodeAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                        nodeSelectorTerms:
-                            - matchExpressions:
-                                  - key: role
-                                    operator: In
-                                    values:
-                                        - applications
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coordinator
+  template:
+    metadata:
+      labels:
+        app: coordinator
+    spec:
+      containers:
+        - name: coordinator
+          image: 'simondileogit/blockchain-coordinator:latest'
+          ports:
+            - containerPort: 5000
+          env:
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: redis-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: redis-config
+                  key: REDIS_PORT
+            - name: REDIS_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: redis-config
+                  key: REDIS_PASSWORD
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbit-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbit-config
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbit-config
+                  key: RABBITMQ_PASSWORD
+            - name: HASH_CHALLENGE
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: HASH_CHALLENGE
+      tolerations:
+        - key: instance_type
+          operator: Equal
+          value: applications
+          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - applications
