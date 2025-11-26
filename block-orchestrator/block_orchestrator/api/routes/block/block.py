@@ -1,9 +1,15 @@
-from block_orchestrator.schemas import Block
 from fastapi import APIRouter, HTTPException, status
+
+from block_orchestrator.schemas import Block
 
 from .dependencies import InjectedBlockService
 
-blocks_router = APIRouter(tags=["Blocks"], prefix="/block")
+blocks_router = APIRouter(tags=["Blocks"], prefix="/blocks")
+
+
+@blocks_router.get("/")
+async def get_blocks(service: InjectedBlockService) -> list[Block]:
+    return await service.get_blocks()
 
 
 @blocks_router.post("/validate")
