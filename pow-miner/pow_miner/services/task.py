@@ -1,5 +1,6 @@
 import json
 import subprocess
+from hashlib import md5
 from pathlib import Path
 
 import requests
@@ -33,9 +34,10 @@ class TaskService:
 
     def find_nonce_with_cpu(self, challenge: str, block: Block) -> TaskResult:
         logger.info("Computing nonce with CPU")
+        block_content_hash = md5(block.content.encode("utf-8")).hexdigest()
         result = find_nonce(
             target_hash_prefix=challenge,
-            base_string=block.content,
+            base_string=block_content_hash,
             start_nonce=0,
             end_nonce=1000000,
         )
@@ -51,7 +53,13 @@ class TaskService:
             )
 
         subprocess.check_call(
-            [str(self.cuda_output_file), "1", "10000", challenge, block.content],
+            [
+                str(self.cuda_output_file),
+                "1",
+                "10000",
+                challenge,
+                md5(block.content.encode("utf-8")).hexdigest(),
+            ],
             stdout=subprocess.DEVNULL,
         )
 
@@ -71,7 +79,7 @@ class TaskService:
                 result = self.find_nonce_with_gpu(challenge, block)
             else:
                 result = self.find_nonce_with_cpu(challenge, block)
-            logger.info(f"Mining result: {result}")
+            logger.info(f"Mining result: {result.model_dump(by_alias=True)}")
             if not result.hash_ or not result.nonce:
                 return
 
@@ -81,10 +89,12 @@ class TaskService:
                     "nonce": result.nonce,
                 }
             )
-            logger.info(f"Sending block to orchestrator: {block}")
+            logger.info(
+                f"Sending block to orchestrator: {block.model_dump(by_alias=True)}"
+            )
             response = requests.post(
                 f"{Settings.BLOCK_ORCHESTRATOR_URL}/block/validate",
-                block.model_dump_json(by_alias=True),
+                block.model_dump(by_alias=True),
             )
             if response.status_code != 200:
                 logger.error(f"Error validating block: {response.text}")

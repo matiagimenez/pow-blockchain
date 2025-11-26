@@ -76,31 +76,30 @@ void calculate_md5(char* input,char* prefix,int input_len, int prefix_len, uint8
 
     char _nonce_num_str[64];
     size_t buffer_len = num_digits(_nonce) ;
-    int suma = (input_len + buffer_len);
+    int sum = (input_len + buffer_len);
 
-    char* concatenated_str = (char*)malloc(suma + 1);
+    char* concatenated_str = (char*)malloc(sum + 1);
     int_to_str(_nonce, _nonce_num_str);
-    memcpy(concatenated_str, input, input_len);
     memcpy(concatenated_str, _nonce_num_str, buffer_len);
     memcpy(concatenated_str + buffer_len, input, input_len);
 
-    concatenated_str[suma + 1] = '\0';
+    concatenated_str[sum + 1] = '\0';
 
 
     uint8_t *input_uint8 = reinterpret_cast<uint8_t*>(concatenated_str);
     uint8_t *prefix_uint8 = reinterpret_cast<uint8_t*>(prefix);
 
-    uint8_t resultado[32];
-    cuda_md5(input_uint8, suma, resultado);
+    uint8_t result[32];
+    cuda_md5(input_uint8, sum, result);
 
     char hex_result[33];
-    byte_to_hex_div(resultado,hex_result,16);
-    uint8_t *resultado_uint8 = reinterpret_cast<uint8_t*>(hex_result);
+    byte_to_hex_div(result,hex_result,16);
+    uint8_t *result_uint8 = reinterpret_cast<uint8_t*>(hex_result);
 
 
-    if (starts_with(resultado_uint8, prefix_uint8, prefix_len)){
-        printf("%s\n", resultado_uint8);
-        memcpy(result, resultado_uint8, 32 * sizeof(uint8_t));
+    if (starts_with(result_uint8, prefix_uint8, prefix_len)){
+        printf("%s\n", result_uint8);
+        memcpy(result, result_uint8, 32 * sizeof(uint8_t));
         memcpy(result + 32, _nonce_num_str, buffer_len * sizeof(uint8_t));
         result[32 + buffer_len] = '\0';
     }
@@ -122,7 +121,7 @@ int main(int argc, char *argv[]) {
     size_t input_len = strlen(input);
     size_t prefix_len = strlen(prefix);
 
-    unsigned char result[64]; // MD5 produce un hash de 16 bytes
+    unsigned char result[64];
 
     char* d_input;
     char* d_prefix;
@@ -150,11 +149,11 @@ int main(int argc, char *argv[]) {
     strncpy(hash_md5_result, reinterpret_cast<const char*>(result), 32);
     char* remaining_chars = reinterpret_cast<char*>(result) + 32;
     hash_md5_result[32] = '\0';
-    int numero = atoi(remaining_chars);
+    int nonce = atoi(remaining_chars);
 
-    printf("Hash MD5 de '%d%s': %.32s\n", numero, input, hash_md5_result);
+    printf("Hash MD5 from '%d%s': %.32s\n", nonce, input, hash_md5_result);
     FILE *json_file = fopen("output.json", "w");
-    fprintf(json_file, "{\"nonce\": %d, \"block_hash\": \"%s\"}", numero, hash_md5_result);
+    fprintf(json_file, "{\"nonce\": %d, \"hash\": \"%s\"}", nonce, hash_md5_result);
 
     cudaFree(d_input);
     cudaFree(d_result);
