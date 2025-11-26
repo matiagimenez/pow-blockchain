@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from aio_pika import Message
+
 from block_orchestrator.infrastructure import RabbitMQClient, RedisClient
 from block_orchestrator.schemas import Block, Task, Transaction
 from block_orchestrator.utils import Settings, logger
@@ -10,8 +11,7 @@ class BlockService:
     async def verify_block_existance(self, block: Block) -> bool:
         try:
             logger.info(
-                f"Verifying existence of block "
-                f"{block.model_dump_json(indent=4, exclude={'transactions'})}"
+                f"Verifying existence of block {block.model_dump(by_alias=True)}"
             )
             async with RedisClient() as redis:
                 previous_block_key = f"b-{block.previous_hash}"
@@ -58,10 +58,7 @@ class BlockService:
 
     async def add_block_to_chain(self, block: Block) -> None:
         try:
-            logger.info(
-                f"Adding block to chain "
-                f"{block.model_dump_json(indent=4, exclude={'transactions'})}"
-            )
+            logger.info(f"Adding block to chain {block.model_dump(by_alias=True)}")
 
             block_key = f"b-{block.previous_hash}"
             timestamp = int(datetime.now().timestamp())

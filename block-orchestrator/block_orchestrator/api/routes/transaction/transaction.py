@@ -1,6 +1,7 @@
+from fastapi import APIRouter, BackgroundTasks, status
+
 from block_orchestrator.schemas import Transaction
 from block_orchestrator.utils import logger
-from fastapi import APIRouter, BackgroundTasks, status
 
 from .dependencies import InjectedTransactionService
 
@@ -13,6 +14,6 @@ async def register_transaction(
     background_tasks: BackgroundTasks,
     service: InjectedTransactionService,
 ) -> Transaction:
-    logger.info(f"Registering transaction {transaction.model_dump_json(indent=4)}")
+    logger.info(f"Registering transaction {transaction.model_dump(by_alias=True)}")
     background_tasks.add_task(service.publish_transaction, transaction)
     return transaction

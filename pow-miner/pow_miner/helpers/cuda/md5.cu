@@ -18,7 +18,6 @@ __device__ uint32_t left_rotate(uint32_t x, uint32_t c) {
 __device__ void cuda_md5(const uint8_t* initial_msg, size_t initial_len, uint8_t* digest) {
     uint32_t h0, h1, h2, h3;
 
-    // These vars will contain the hash
     h0 = 0x67452301;
     h1 = 0xefcdab89;
     h2 = 0x98badcfe;
@@ -28,13 +27,13 @@ __device__ void cuda_md5(const uint8_t* initial_msg, size_t initial_len, uint8_t
 
     uint8_t* msg = (uint8_t*)malloc(new_len + 64);
     memcpy(msg, initial_msg, initial_len);
-    msg[initial_len] = 128; // append the "1" bit; most significant bit is "1"
+    msg[initial_len] = 128;
     for (int i = initial_len + 1; i < new_len; i++) {
-        msg[i] = 0; // append "0" bits
+        msg[i] = 0;
     }
 
     uint64_t bits_len = 8 * initial_len;
-    memcpy(msg + new_len, &bits_len, 8); // in little-endian
+    memcpy(msg + new_len, &bits_len, 8);
 
     for (int offset = 0; offset < new_len; offset += 64) {
         uint32_t* w = (uint32_t*)(msg + offset);
