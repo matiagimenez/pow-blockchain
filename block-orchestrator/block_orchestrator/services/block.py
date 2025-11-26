@@ -3,7 +3,7 @@ from datetime import datetime
 from aio_pika import Message
 
 from block_orchestrator.infrastructure import RabbitMQClient, RedisClient
-from block_orchestrator.schemas import Block, Task, Transaction
+from block_orchestrator.schemas import Block, Task, Transaction, Transactions
 from block_orchestrator.utils import Settings, logger
 
 
@@ -67,4 +67,30 @@ class BlockService:
                 await redis.hset(block_key, mapping=block.to_dict())
         except Exception as e:
             logger.error(f"Failed to add block to chain {block.hash_}: {e}")
+            raise
+
+    async def get_blocks(self) -> list[Block]:
+        try:
+            logger.info("Getting all blocks from chain")
+            blocks = []
+            current_previous_hash = "0"
+
+            async with RedisClient() as redis:
+                while True:
+                    block_key = f"b-{current_previous_hash}"
+                    data = await redis.hgetall(block_key)
+
+                    if not data:
+                        break
+
+                    transactions = Transactions.validate_json(data["transactions"])
+                    data["transactions"] = transactions
+                    block = Block(**data)
+                    blocks.append(block)
+                    current_previous_hash = block.hash_
+
+            return blocks
+
+        except Exception as e:
+            logger.error(f"Failed to get blocks: {e}")
             raise

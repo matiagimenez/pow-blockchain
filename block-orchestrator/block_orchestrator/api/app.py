@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
 
-from block_orchestrator.helpers import process_transactions_and_build_block
-from block_orchestrator.utils import Scheduler, Settings
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+
+from block_orchestrator.helpers import process_transactions_and_build_block
+from block_orchestrator.utils import Scheduler, Settings
 
 from .routes import base_router, blocks_router, transactions_router
 
