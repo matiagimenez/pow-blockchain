@@ -1,0 +1,48 @@
+[project]
+name = "pool-manager"
+version = "0.1.0"
+description = "Manager for mining pool"
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "aio-pika>=9.5.8",
+  "apscheduler>=3.11.1",
+  "fastapi[standard]>=0.121.3",
+  "loguru>=0.7.3",
+  "pydantic>=2.12.4",
+  "pydantic-settings>=2.12",
+  "redis>=7.1",
+  "google-cloud-compute>=1.40",
+  "google-auth>=2.43",
+]
+
+[dependency-groups]
+dev = [
+  "ipykernel>=7.1",
+  "poethepoet>=0.37",
+  "pre-commit>=3.5",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.pylint]
+disable = [
+  "missing-docstring",
+  "missing-module-docstring",
+  "missing-function-docstring",
+  "missing-class-docstring",
+  "too-few-public-methods",
+]
+
+[tool.pylint.main]
+jobs = 0
+
+[tool.poe.tasks]
+dev = "uvicorn block_orchestrator.api.app:app --reload --host 0.0.0.0 --port 8000"
