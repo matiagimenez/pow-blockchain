@@ -16,5 +16,8 @@ class BasicSettings(BaseSettings):
     CONNECTION_RETRY_DELAY: int = 5
     KEEP_ALIVE_INTERVAL: int = 5
 
+    POOL_MANAGER_URL: str = "http://pool-manager:5002"
+    BLOCK_ORCHESTRATOR_URL: str = "http://block-orchestrator:5001"
+
 
 Settings = BasicSettings()
