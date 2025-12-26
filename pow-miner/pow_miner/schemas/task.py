@@ -2,11 +2,9 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from pow_miner.utils import Settings
-
 
 class Task(BaseModel):
-    challenge: str = Field(default_factory=lambda: Settings.HASH_CHALLENGE)
+    challenge: str
     data: dict[str, Any]
     start_nonce: int
     end_nonce: int

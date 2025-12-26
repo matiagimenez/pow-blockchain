@@ -20,9 +20,5 @@ class Transaction(BaseModel):
             raise ValueError(f"Invalid wallet address format: {address}")
         return address
 
-    @property
-    def content(self) -> str:
-        return "".join(self.model_dump_json(by_alias=True))
-
 
 Transactions = TypeAdapter(list[Transaction])

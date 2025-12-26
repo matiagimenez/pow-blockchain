@@ -32,8 +32,7 @@ class BasicSettings(BaseSettings):
     CPU_MINERS_COUNT: int = 1
     EXPIRATION_TIME: int = 30
     CHECK_POOL_STATUS_INTERVAL: int = 10
-    CPU_HASH_CHALLENGE: str = "0000"
-    GPU_HASH_CHALLENGE: str = "000000"
+    HASH_CHALLENGE: str = "0000"
 
     @property
     def GCP_MACHINE_FULL_TYPE(self) -> str:

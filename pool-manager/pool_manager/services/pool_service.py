@@ -136,14 +136,12 @@ class PoolService:
     def _get_mining_config(self, gpu_miners_alive: int) -> tuple[int, str]:
         if gpu_miners_alive > 0:
             logger.info(
-                f"GPU miners active, using challenge: {Settings.GPU_HASH_CHALLENGE}"
+                f"GPU miners active, using challenge: {Settings.HASH_CHALLENGE}"
             )
-            return gpu_miners_alive, Settings.GPU_HASH_CHALLENGE
+            return gpu_miners_alive, Settings.HASH_CHALLENGE
 
-        logger.info(
-            f"CPU miners active, using challenge: {Settings.CPU_HASH_CHALLENGE}"
-        )
-        return self.gcp.get_active_instance_count(), Settings.CPU_HASH_CHALLENGE
+        logger.info(f"CPU miners active, using challenge: {Settings.HASH_CHALLENGE}")
+        return self.gcp.get_active_instance_count(), Settings.HASH_CHALLENGE
 
     def _calculate_range_interval(self, miners_count: int) -> int:
         if miners_count == 0:
