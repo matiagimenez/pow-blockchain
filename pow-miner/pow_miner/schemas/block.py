@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -24,6 +25,6 @@ class Block(BaseModel):
     @field_validator("transactions", mode="before")
     def validate_transactions(
         cls,
-        transactions: list[Transaction],
+        transactions: Any,
     ) -> list[Transaction]:
-        return Transactions.validate_json(transactions)
+        return Transactions.validate_python(transactions)
