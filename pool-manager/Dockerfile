@@ -13,7 +13,7 @@ USER nonroot
 
 RUN uv sync --frozen
 
-EXPOSE 5000
+EXPOSE 5002
 
-CMD ["uv", "run", "uvicorn", "pool_manager.main:main", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uv", "run", "uvicorn", "pool_manager.main:main", "--host", "0.0.0.0", "--port", "5002"]
     

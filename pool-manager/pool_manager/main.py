@@ -6,7 +6,7 @@ def main() -> None:
         "pool_manager.api.app:app",
         reload=True,
         host="0.0.0.0",
-        port=5000,
+        port=5002,
     )
 
 
