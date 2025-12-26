@@ -23,6 +23,7 @@ class Block(BaseModel):
 
     @field_validator("transactions", mode="before")
     def validate_transactions(
+        cls,
         transactions: list[Transaction],
     ) -> list[Transaction]:
         return Transactions.validate_json(transactions)

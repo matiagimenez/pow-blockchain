@@ -50,3 +50,4 @@ repos:
           - loguru==0.7.3
           - pydantic==2.12.4
           - pydantic-settings==2.12
+          - types-requests==2.32.4.20250913

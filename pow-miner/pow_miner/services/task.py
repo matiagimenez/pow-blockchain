@@ -111,7 +111,7 @@ class TaskService:
         except Exception as e:
             logger.error(f"Error mining task: {e}")
 
-    async def consume_tasks(self) -> Task | None:
+    async def consume_tasks(self) -> None:
         logger.info(" [*] Waiting for messages. To exit press CTRL+C")
         try:
             async with RabbitMQClient() as channel:
