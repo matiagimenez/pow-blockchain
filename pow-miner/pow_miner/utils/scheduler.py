@@ -13,7 +13,9 @@ class Scheduler_:
         logger.info("Starting scheduler...")
         self.scheduler.start()
 
-    def add_cronjob(self, job: Callable[[], Awaitable[None]], interval: int) -> None:
+    def add_cronjob(
+        self, job: Callable[[], Awaitable[None] | None], interval: int
+    ) -> None:
         logger.info(f"Adding cronjob to scheduler - {job.__name__}")
         self.scheduler.add_job(job, "interval", seconds=interval)
 

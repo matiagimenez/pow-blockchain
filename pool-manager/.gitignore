@@ -1,7 +1,4 @@
 .venv
-.history
-/redis/
-/rabbitmq/
 .env
 __pycache__
 credentials.json

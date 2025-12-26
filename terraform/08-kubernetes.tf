@@ -10,7 +10,7 @@ resource "google_container_cluster" "primary" {
   monitoring_service       = "monitoring.googleapis.com/kubernetes"
   networking_mode          = "VPC_NATIVE"
   deletion_protection = false
-  
+
   addons_config {
     http_load_balancing {
       disabled = false
