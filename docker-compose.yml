@@ -65,8 +65,8 @@ services:
       RABBITMQ_USER: 'admin'
       RABBITMQ_PASSWORD: 'password'
       RABBITMQ_EXCHANGE: 'blockchain'
-      RABBITMQ_TASKS_QUEUE: 'tasks'
-      RABBITMQ_TASKS_ROUTING_KEY: 't'
+      RABBITMQ_SUBTASKS_QUEUE: 'subtasks'
+      RABBITMQ_SUBTASKS_ROUTING_KEY: 'st'
       BLOCK_ORCHESTRATOR_URL: 'http://block-orchestrator:8000'
       POOL_MANAGER_URL: 'http://pool-manager:5002'
     ports:
@@ -95,6 +95,10 @@ services:
       - MAX_RANGE=100000
       - CPU_MINERS_COUNT=5
       - EXPIRATION_TIME=15
+      - RABBITMQ_SUBTASKS_QUEUE='subtasks'
+      - RABBITMQ_SUBTASKS_ROUTING_KEY='st'
+      - RABBITMQ_TASKS_QUEUE='tasks'
+      - RABBITMQ_TASKS_ROUTING_KEY='t'
     networks:
       - blockchain-network
 networks:

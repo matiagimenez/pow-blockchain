@@ -69,8 +69,8 @@ class RabbitMQClient:
         )
 
         queues = {
-            Settings.RABBITMQ_TRANSACTIONS_QUEUE: Settings.RABBITMQ_TRANSACTIONS_ROUTING_KEY,
             Settings.RABBITMQ_TASKS_QUEUE: Settings.RABBITMQ_TASKS_ROUTING_KEY,
+            Settings.RABBITMQ_SUBTASKS_QUEUE: Settings.RABBITMQ_SUBTASKS_ROUTING_KEY,
         }
 
         for queue_name, routing_key in queues.items():

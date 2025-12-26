@@ -2,8 +2,9 @@ from datetime import datetime
 from hashlib import md5
 from typing import Any
 
-from block_orchestrator.utils import Settings
 from pydantic import BaseModel, Field
+
+from pool_manager.utils import Settings
 
 from .transaction import Transaction, Transactions
 
@@ -41,3 +42,8 @@ class Block(BaseModel):
         calculated_hash = md5(md5_input.encode("utf-8")).hexdigest()
 
         return calculated_hash == self.hash_
+
+
+class MiningTask(BaseModel):
+    block: Block
+    challenge: str

@@ -69,6 +69,6 @@ class RabbitMQClient:
         )
 
         queue = await self._channel.declare_queue(
-            name=Settings.RABBITMQ_TASKS_QUEUE, durable=True
+            name=Settings.RABBITMQ_SUBTASKS_QUEUE, durable=True
         )
-        await queue.bind(exchange, Settings.RABBITMQ_TASKS_ROUTING_KEY)
+        await queue.bind(exchange, Settings.RABBITMQ_SUBTASKS_ROUTING_KEY)

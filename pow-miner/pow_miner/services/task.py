@@ -107,7 +107,7 @@ class TaskService:
         logger.info(" [*] Waiting for messages. To exit press CTRL+C")
         try:
             async with RabbitMQClient() as channel:
-                queue_name = Settings.RABBITMQ_TASKS_QUEUE
+                queue_name = Settings.RABBITMQ_SUBTASKS_QUEUE
                 queue = await channel.declare_queue(queue_name, durable=True)
                 async with queue.iterator() as queue_iter:
                     async for message in queue_iter:

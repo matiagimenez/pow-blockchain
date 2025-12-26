@@ -28,6 +28,18 @@ class BasicSettings(BaseSettings):
     # Created with packer https://github.com/matiagimenez/pow-blockchain/tree/main/terraform/packer
     GCP_SOURCE_IMAGE: str = "pow-miner-1718748034"
 
+    MAX_RANGE: int = 1000000
+    CPU_MINERS_COUNT: int = 1
+    EXPIRATION_TIME: int = 30
+    CHECK_POOL_STATUS_INTERVAL: int = 10
+    CPU_HASH_CHALLENGE: str = "0000"
+    GPU_HASH_CHALLENGE: str = "000000"
+
+    RABBITMQ_TASKS_QUEUE: str = "tasks"
+    RABBITMQ_TASKS_ROUTING_KEY: str = "t"
+    RABBITMQ_SUBTASKS_QUEUE: str = "subtasks"
+    RABBITMQ_SUBTASKS_ROUTING_KEY: str = "st"
+
     @property
     def GCP_MACHINE_FULL_TYPE(self) -> str:
         return f"zones/{self.GCP_ZONE}/machineTypes/{self.GCP_MACHINE_TYPE}"

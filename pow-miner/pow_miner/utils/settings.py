@@ -9,8 +9,8 @@ class BasicSettings(BaseSettings):
     RABBITMQ_USER: str = "admin"
     RABBITMQ_PASSWORD: str = "password"
     RABBITMQ_EXCHANGE: str = "blockchain"
-    RABBITMQ_TASKS_QUEUE: str = "tasks"
-    RABBITMQ_TASKS_ROUTING_KEY: str = "t"
+    RABBITMQ_SUBTASKS_QUEUE: str = "subtasks"
+    RABBITMQ_SUBTASKS_ROUTING_KEY: str = "st"
 
     CONNECTION_MAX_RETRIES: int = 10
     CONNECTION_RETRY_DELAY: int = 5
