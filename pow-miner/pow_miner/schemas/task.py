@@ -8,6 +8,8 @@ from pow_miner.utils import Settings
 class Task(BaseModel):
     challenge: str = Field(default_factory=lambda: Settings.HASH_CHALLENGE)
     data: dict[str, Any]
+    start_nonce: int
+    end_nonce: int
 
 
 class TaskResult(BaseModel):

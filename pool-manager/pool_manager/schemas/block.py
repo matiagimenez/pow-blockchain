@@ -42,8 +42,3 @@ class Block(BaseModel):
         calculated_hash = md5(md5_input.encode("utf-8")).hexdigest()
 
         return calculated_hash == self.hash_
-
-
-class MiningTask(BaseModel):
-    block: Block
-    challenge: str

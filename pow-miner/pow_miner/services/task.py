@@ -32,19 +32,23 @@ class TaskService:
     def cuda_result_file(self) -> Path:
         return self.cuda_directory / "output.json"
 
-    def find_nonce_with_cpu(self, challenge: str, block: Block) -> TaskResult:
-        logger.info("Computing nonce with CPU")
+    def find_nonce_with_cpu(
+        self, challenge: str, block: Block, start_nonce: int, end_nonce: int
+    ) -> TaskResult:
+        logger.info(f"Computing nonce with CPU (range: {start_nonce}-{end_nonce})")
         block_content_hash = md5(block.content.encode("utf-8")).hexdigest()
         result = find_nonce(
             target_hash_prefix=challenge,
             base_string=block_content_hash,
-            start_nonce=0,
-            end_nonce=1000000,
+            start_nonce=start_nonce,
+            end_nonce=end_nonce,
         )
         return TaskResult(**result)
 
-    def find_nonce_with_gpu(self, challenge: str, block: Block) -> TaskResult:
-        logger.info("Computing nonce with GPU")
+    def find_nonce_with_gpu(
+        self, challenge: str, block: Block, start_nonce: int, end_nonce: int
+    ) -> TaskResult:
+        logger.info(f"Computing nonce with GPU (range: {start_nonce}-{end_nonce})")
 
         if not self.cuda_output_file.is_file():
             logger.info("Compiling CUDA code...")
@@ -55,8 +59,8 @@ class TaskService:
         subprocess.check_call(
             [
                 str(self.cuda_output_file),
-                "1",
-                "10000",
+                str(start_nonce),
+                str(end_nonce),
                 challenge,
                 md5(block.content.encode("utf-8")).hexdigest(),
             ],
@@ -76,9 +80,13 @@ class TaskService:
             logger.info(f"Block: {task.data}")
             block = Block.model_validate(task.data)
             if self.is_gpu_available:
-                result = self.find_nonce_with_gpu(challenge, block)
+                result = self.find_nonce_with_gpu(
+                    challenge, block, task.start_nonce, task.end_nonce
+                )
             else:
-                result = self.find_nonce_with_cpu(challenge, block)
+                result = self.find_nonce_with_cpu(
+                    challenge, block, task.start_nonce, task.end_nonce
+                )
             logger.info(f"Mining result: {result.model_dump(by_alias=True)}")
             if not result.hash_ or not result.nonce:
                 return
@@ -93,7 +101,7 @@ class TaskService:
                 f"Sending block to orchestrator: {block.model_dump(by_alias=True)}"
             )
             response = requests.post(
-                f"{Settings.BLOCK_ORCHESTRATOR_URL}/block/validate",
+                f"{Settings.BLOCK_ORCHESTRATOR_URL}/blocks/validate",
                 block.model_dump(by_alias=True),
             )
             if response.status_code != 200:

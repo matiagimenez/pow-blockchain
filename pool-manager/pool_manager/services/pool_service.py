@@ -5,7 +5,7 @@ from typing import Any
 from aio_pika import DeliveryMode, IncomingMessage, Message
 
 from pool_manager.infrastructure import GoogleCloudClient, RabbitMQClient, RedisClient
-from pool_manager.schemas.block import Block, MiningTask
+from pool_manager.schemas import Block, MiningTask
 from pool_manager.utils import Settings, logger
 
 
@@ -31,9 +31,9 @@ class PoolService:
                 mining_task = MiningTask.model_validate_json(body)
 
                 logger.info(f"Processing task with challenge: {mining_task.challenge}")
-                await self.create_mining_subtasks(
-                    mining_task.block, mining_task.challenge
-                )
+                block = Block.model_validate(mining_task.data)
+
+                await self.create_mining_subtasks(block, mining_task.challenge)
             except Exception as e:
                 logger.error(f"Error processing task: {e}")
 
@@ -51,10 +51,10 @@ class PoolService:
 
             for _ in range(miners_count):
                 subtask = {
-                    "from": range_from,
-                    "to": range_to,
+                    "start_nonce": range_from,
+                    "end_nonce": range_to,
                     "challenge": challenge,
-                    "block": block,
+                    "data": block.to_dict(),
                 }
 
                 range_from = range_to + 1

@@ -1,8 +1,8 @@
-from pydantic import BaseModel
+from typing import Any
 
-from .block import Block
+from pydantic import BaseModel
 
 
 class MiningTask(BaseModel):
-    block: Block
+    data: dict[str, Any]
     challenge: str
