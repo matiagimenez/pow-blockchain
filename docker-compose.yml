@@ -83,23 +83,20 @@ services:
     ports:
       - '5002:5002'
     environment:
-      - RABBITMQ_HOST=rabbit
-      - RABBITMQ_USER=admin
-      - RABBITMQ_PASSWORD=password
+      - RABBITMQ_HOST='rabbitmq'
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER='admin'
+      - RABBITMQ_PASSWORD='password'
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=
       - CPU_HASH_CHALLENGE=0000
       - GPU_HASH_CHALLENGE=000000
       - KEEP_ALIVE_INTERVAL=25
       - MAX_RANGE=100000
       - CPU_MINERS_COUNT=5
       - EXPIRATION_TIME=15
-      - CREDENTIALS_PATH=/credentials/credentials.json
     networks:
       - blockchain-network
-    volumes:
-      - ./pool-manager/credentials.json:/credentials/credentials.json
 networks:
   blockchain-network:
 volumes:
