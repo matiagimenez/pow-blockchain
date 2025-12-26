@@ -9,10 +9,10 @@ class BasicSettings(BaseSettings):
     RABBITMQ_USER: str = "admin"
     RABBITMQ_PASSWORD: str = "password"
     RABBITMQ_EXCHANGE: str = "blockchain"
-    RABBITMQ_TRANSACTIONS_QUEUE: str = "transactions"
-    RABBITMQ_TRANSACTIONS_ROUTING_KEY: str = "tx"
     RABBITMQ_TASKS_QUEUE: str = "tasks"
     RABBITMQ_TASKS_ROUTING_KEY: str = "t"
+    RABBITMQ_SUBTASKS_QUEUE: str = "subtasks"
+    RABBITMQ_SUBTASKS_ROUTING_KEY: str = "st"
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
@@ -34,11 +34,6 @@ class BasicSettings(BaseSettings):
     CHECK_POOL_STATUS_INTERVAL: int = 10
     CPU_HASH_CHALLENGE: str = "0000"
     GPU_HASH_CHALLENGE: str = "000000"
-
-    RABBITMQ_TASKS_QUEUE: str = "tasks"
-    RABBITMQ_TASKS_ROUTING_KEY: str = "t"
-    RABBITMQ_SUBTASKS_QUEUE: str = "subtasks"
-    RABBITMQ_SUBTASKS_ROUTING_KEY: str = "st"
 
     @property
     def GCP_MACHINE_FULL_TYPE(self) -> str:

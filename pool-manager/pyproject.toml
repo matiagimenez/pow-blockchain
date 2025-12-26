@@ -14,12 +14,12 @@ dependencies = [
   "aio-pika>=9.5.8",
   "apscheduler>=3.11.1",
   "fastapi[standard]>=0.121.3",
+  "google-auth>=2.43",
+  "google-cloud-compute>=1.40",
   "loguru>=0.7.3",
   "pydantic>=2.12.4",
   "pydantic-settings>=2.12",
   "redis>=7.1",
-  "google-cloud-compute>=1.40",
-  "google-auth>=2.43",
 ]
 
 [dependency-groups]

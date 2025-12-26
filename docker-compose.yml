@@ -69,6 +69,7 @@ services:
       RABBITMQ_SUBTASKS_ROUTING_KEY: 'st'
       BLOCK_ORCHESTRATOR_URL: 'http://block-orchestrator:8000'
       POOL_MANAGER_URL: 'http://pool-manager:5002'
+      KEEP_ALIVE_INTERVAL: 5
     ports:
       - '5000:5000'
     networks:
@@ -83,22 +84,33 @@ services:
     ports:
       - '5002:5002'
     environment:
-      - RABBITMQ_HOST='rabbitmq'
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER='admin'
-      - RABBITMQ_PASSWORD='password'
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CPU_HASH_CHALLENGE=0000
-      - GPU_HASH_CHALLENGE=000000
-      - KEEP_ALIVE_INTERVAL=25
-      - MAX_RANGE=100000
-      - CPU_MINERS_COUNT=5
-      - EXPIRATION_TIME=15
-      - RABBITMQ_SUBTASKS_QUEUE='subtasks'
-      - RABBITMQ_SUBTASKS_ROUTING_KEY='st'
-      - RABBITMQ_TASKS_QUEUE='tasks'
-      - RABBITMQ_TASKS_ROUTING_KEY='t'
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: 'admin'
+      RABBITMQ_PASSWORD: 'password'
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CPU_HASH_CHALLENGE: '0000'
+      GPU_HASH_CHALLENGE: '000000'
+      MAX_RANGE: 100000
+      CPU_MINERS_COUNT: 5
+      EXPIRATION_TIME: 15
+      RABBITMQ_SUBTASKS_QUEUE: 'subtasks'
+      RABBITMQ_SUBTASKS_ROUTING_KEY: 'st'
+      RABBITMQ_TASKS_QUEUE: 'tasks'
+      RABBITMQ_TASKS_ROUTING_KEY: 't'
+    networks:
+      - blockchain-network
+
+  client:
+    build: ./client
+    container_name: client
+    environment:
+      BLOCK_ORCHESTRATOR_URL: 'http://block-orchestrator:8000'
+      TRANSACTIONS_PER_BATCH: 10
+      BATCH_INTERVAL_SECONDS: 60
+    depends_on:
+      - block_orchestrator
     networks:
       - blockchain-network
 networks:

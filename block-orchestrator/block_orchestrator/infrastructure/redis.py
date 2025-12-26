@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from block_orchestrator.utils import Settings
 from redis.asyncio import Redis

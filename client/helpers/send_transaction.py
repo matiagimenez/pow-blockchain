@@ -2,8 +2,10 @@ import random
 from typing import Any
 
 import requests
-from helpers import generate_wallet_address
+
 from utils import Settings, logger
+
+from .generate_wallet_address import generate_wallet_address
 
 
 def create_transaction_data() -> dict[str, Any]:
